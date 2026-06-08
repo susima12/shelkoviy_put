@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@/lib/router-compat";
-import { supabase } from "@/integrations/supabase/client";
+import { api, notifyAuthChange, setToken } from "@/lib/api-client";
 import { PageHero } from "@/components/ui/page-hero";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,15 +12,7 @@ import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
-
-const ADMIN_HINTS = [
-  ["Театры моды", "admin_teatry-mody@festival.local", "AdminTeatry-mody2026!"],
-  ["Юный модельер", "admin_yunyy-modeler@festival.local", "AdminYunyy-modeler2026!"],
-  ["Театральные коллективы", "admin_teatralnye-kollektivy@festival.local", "AdminTeatralnye-kollektivy2026!"],
-  ["Вокал", "admin_vokal@festival.local", "AdminVokal2026!"],
-  ["Хореография", "admin_horeograph@festival.local", "AdminHoreograph2026!"],
-  ["Инструментальное", "admin_instrument@festival.local", "AdminInstrument2026!"],
-];
+import { ADMIN_HINTS } from "@/lib/admin-credentials";
 
 const Admin = () => {
   const nav = useNavigate();
@@ -35,34 +27,19 @@ const Admin = () => {
 
   const load = async () => {
     try {
-      const { data: sess } = await supabase.auth.getSession();
-      if (!sess.session) {
-        setAuthed(false);
-        return;
-      }
+      const { competition: comp, applications: apps } = await api.getAdminDashboard();
       setAuthed(true);
-      const { data: roles, error: rErr } = await supabase
-        .from("user_roles")
-        .select("competition_id, role")
-        .eq("user_id", sess.session.user.id)
-        .eq("role", "admin");
-      if (rErr) throw rErr;
-
-      const compId = roles?.[0]?.competition_id;
-      if (!compId) {
+      if (!comp) {
         setError("Этот аккаунт не является администратором какого-либо конкурса.");
         return;
       }
-
-      const [cRes, aRes] = await Promise.all([
-        supabase.from("competitions").select("*").eq("id", compId).maybeSingle(),
-        supabase.from("applications").select("*").eq("competition_id", compId).order("created_at", { ascending: false }),
-      ]);
-      if (cRes.error) throw cRes.error;
-      if (aRes.error) throw aRes.error;
-      setCompetition(cRes.data);
-      setApplications(aRes.data ?? []);
+      setCompetition(comp);
+      setApplications(apps ?? []);
     } catch (e: any) {
+      if (e?.status === 401) {
+        setAuthed(false);
+        return;
+      }
       console.error("Admin load failed", e);
       setError(translateError(e, "Не удалось загрузить админ-панель"));
     } finally {
@@ -76,10 +53,19 @@ const Admin = () => {
     e.preventDefault();
     setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      const { user, token } = await api.signIn(email.trim().toLowerCase(), password);
+      if (!user || !token) throw new Error("Не удалось войти");
+      setToken(token);
+      notifyAuthChange(user);
+      if (!user.is_admin) {
+        toast.error("Этот аккаунт не является администратором конкурса");
+        return;
+      }
       setLoading(true);
+      setError(null);
+      setAuthed(true);
       await load();
+      toast.success("Вход выполнен");
     } catch (err: any) {
       toast.error(translateError(err, "Ошибка входа"));
     } finally {
@@ -88,7 +74,9 @@ const Admin = () => {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    await api.signOut();
+    setToken(null);
+    notifyAuthChange(null);
     setAuthed(false);
     setCompetition(null);
     setApplications([]);
@@ -131,18 +119,13 @@ const Admin = () => {
   };
 
   const updateStatus = async (id: string, value: string) => {
-    const { error } = await supabase.from("applications").update({ status: value as any }).eq("id", id);
-    if (error) toast.error(translateError(error));
-    else {
+    try {
+      await api.updateApplicationStatus(id, value);
       setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, status: value } : a)));
       toast.success("Статус обновлён");
+    } catch (e) {
+      toast.error(translateError(e));
     }
-  };
-
-  const downloadFile = async (path: string) => {
-    const { data, error } = await supabase.storage.from("applications").createSignedUrl(path, 60 * 5);
-    if (error || !data?.signedUrl) { toast.error(translateError(error, "Файл недоступен")); return; }
-    window.open(data.signedUrl, "_blank");
   };
 
   if (loading) return <div className="container py-32 text-center">Загрузка...</div>;
@@ -249,11 +232,6 @@ const Admin = () => {
                         <span>📞 {a.phone}</span>
                         {a.organization && <span>🏛 {a.organization}</span>}
                         {a.city && <span>📍 {a.city}{a.country ? `, ${a.country}` : ""}</span>}
-                        {a.video_url && (
-                          <a href={a.video_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                            🎬 Видео-визитка
-                          </a>
-                        )}
                       </div>
                       {a.performance_title && (
                         <div className="text-sm">
@@ -263,20 +241,6 @@ const Admin = () => {
                         </div>
                       )}
                       {a.notes && <p className="text-sm text-muted-foreground italic">{a.notes}</p>}
-                      {(a.attachment_path || a.payment_receipt_path) && (
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {a.attachment_path && (
-                            <Button size="sm" variant="outline" onClick={() => downloadFile(a.attachment_path)}>
-                              📎 Файл-приложение
-                            </Button>
-                          )}
-                          {a.payment_receipt_path && (
-                            <Button size="sm" variant="outline" onClick={() => downloadFile(a.payment_receipt_path)}>
-                              🧾 Чек об оплате
-                            </Button>
-                          )}
-                        </div>
-                      )}
                       <div className="text-xs text-muted-foreground">
                         Подана: {format(new Date(a.created_at), "dd.MM.yyyy HH:mm")}
                       </div>

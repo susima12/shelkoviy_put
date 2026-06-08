@@ -32,17 +32,19 @@ export const Hero = () => {
         </div>
 
         <h1
-          className="mt-8 font-display text-balance leading-[0.95] animate-fade-in-up"
+          className="mt-8 font-display leading-tight animate-fade-in-up overflow-visible"
           style={{ animationDelay: "0.1s", color: "hsl(40 60% 96%)" }}
         >
           <span className="block font-marcellus text-base md:text-lg uppercase tracking-[0.4em] text-gold-soft mb-6">
             XV международный фестиваль-конкурс
           </span>
-          <span className="block text-4xl md:text-6xl lg:text-7xl font-medium">
-            Шёлковый
-          </span>
-          <span className="block text-4xl md:text-6xl lg:text-7xl italic text-gradient-gold -mt-1">
-            путь
+          <span className="mx-auto flex w-fit flex-col items-center overflow-visible">
+            <span className="text-4xl md:text-6xl lg:text-7xl font-medium leading-none">
+              Шёлковый
+            </span>
+            <span className="mt-1 inline-block px-1 pb-0.5 text-4xl md:text-6xl lg:text-7xl italic leading-normal text-gradient-gold">
+              путь
+            </span>
           </span>
         </h1>
 
@@ -76,9 +78,9 @@ export const Hero = () => {
           style={{ animationDelay: "0.4s" }}
         >
           {[
-            { icon: Calendar, label: "Сезон", value: "2026" },
+            { icon: Calendar, label: "Даты", value: "16–19 апреля 2026" },
             { icon: Trophy, label: "Конкурсов", value: "6 направлений" },
-            { icon: MapPin, label: "Финал", value: "Оренбург" },
+            { icon: MapPin, label: "Место", value: "Оренбург, Дворец творчества" },
           ].map(({ icon: Icon, label, value }) => (
             <div
               key={label}

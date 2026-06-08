@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@/lib/router-compat";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 import { PageHero } from "@/components/ui/page-hero";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { MessageCircle, FileDown, BellRing } from "lucide-react";
-import { toast } from "sonner";
+import { MessageCircle, BellRing } from "lucide-react";
 
 const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
   new: { text: "Новая", cls: "bg-blue-500/15 text-blue-700" },
@@ -18,41 +18,22 @@ const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
 
 const MyApplications = () => {
   const nav = useNavigate();
+  const { user, isReady } = useAuthReady();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<any[]>([]);
   const [comps, setComps] = useState<Record<string, { name: string; slug: string }>>({});
   const [invites, setInvites] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    (async () => {
-      const { data: sess } = await supabase.auth.getSession();
-      if (!sess.session) { nav("/auth"); return; }
-      const uid = sess.session.user.id;
-      const [{ data: apps }, { data: cs }, { data: members }] = await Promise.all([
-        supabase
-          .from("applications")
-          .select("*")
-          .eq("user_id", uid)
-          .order("created_at", { ascending: false }),
-        supabase.from("competitions").select("id, name, slug"),
-        supabase.from("chat_members").select("competition_id, banned").eq("user_id", uid),
-      ]);
-      setItems(apps ?? []);
-      const map: any = {};
-      (cs ?? []).forEach((c: any) => { map[c.id] = c; });
-      setComps(map);
-      const inv: Record<string, boolean> = {};
-      (members ?? []).forEach((m: any) => { if (!m.banned) inv[m.competition_id] = true; });
-      setInvites(inv);
+    if (!isReady) return;
+    if (!user) { nav("/auth"); return; }
+    api.getMyApplications().then(({ applications, competitions, invites: inv }) => {
+      setItems(applications ?? []);
+      setComps(competitions ?? {});
+      setInvites(inv ?? {});
       setLoading(false);
-    })();
-  }, [nav]);
-
-  const downloadFile = async (path: string) => {
-    const { data, error } = await supabase.storage.from("applications").createSignedUrl(path, 60 * 5);
-    if (error || !data?.signedUrl) { toast.error(error?.message ?? "Файл недоступен"); return; }
-    window.open(data.signedUrl, "_blank");
-  };
+    }).catch(() => setLoading(false));
+  }, [isReady, user, nav]);
 
   if (loading) return <div className="container py-32 text-center">Загрузка...</div>;
 
@@ -78,53 +59,24 @@ const MyApplications = () => {
                       <div>
                         <div className="font-serif text-lg">{comp?.name ?? "Конкурс"}</div>
                         <div className="text-sm text-muted-foreground">
-                          {a.participant_name} · {format(new Date(a.created_at), "dd.MM.yyyy HH:mm")}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1 space-x-3">
-                          {a.age_category && <span>Возраст: <strong>{a.age_category}</strong></span>}
-                          {a.nomination && <span>Номинация: <strong>{a.nomination}</strong></span>}
-                          {a.performance_title && <span>Номер: <strong>{a.performance_title}</strong></span>}
+                          {format(new Date(a.created_at), "dd.MM.yyyy HH:mm")} · {a.participant_name}
                         </div>
                       </div>
                       <Badge className={st.cls}>{st.text}</Badge>
                     </div>
-
-                    {(a.attachment_path || a.payment_receipt_path) && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {a.attachment_path && (
-                          <Button size="sm" variant="outline" onClick={() => downloadFile(a.attachment_path)}>
-                            <FileDown className="h-4 w-4" /> Файл-приложение
-                          </Button>
-                        )}
-                        {a.payment_receipt_path && (
-                          <Button size="sm" variant="outline" onClick={() => downloadFile(a.payment_receipt_path)}>
-                            <FileDown className="h-4 w-4" /> Чек об оплате
-                          </Button>
-                        )}
-                      </div>
+                    <div className="text-sm text-muted-foreground grid sm:grid-cols-2 gap-1">
+                      {a.nomination && <span>Номинация: {a.nomination}</span>}
+                      {a.age_category && <span>Возраст: {a.age_category}</span>}
+                    </div>
+                    {invited && comp && (
+                      <Button asChild size="sm" variant="outline" className="mt-3">
+                        <Link to={`/chat/${comp.slug}`}><MessageCircle className="h-3 w-3" /> Чат конкурса</Link>
+                      </Button>
                     )}
-
-                    {a.admin_notes && (
-                      <p className="text-sm bg-secondary/40 p-3 rounded mb-3">
-                        <strong>Сообщение администратора:</strong> {a.admin_notes}
+                    {a.status === "approved" && !invited && (
+                      <p className="text-xs text-muted-foreground mt--2 flex items-center gap-1">
+                        <BellRing className="h-3 w-3" /> Администратор пригласит вас в чат после проверки
                       </p>
-                    )}
-
-                    {a.status === "approved" && comp && (
-                      <div className="pt-2 border-t border-border mt-3">
-                        {invited ? (
-                          <Button asChild variant="festival" size="sm">
-                            <Link to={`/chat/${comp.slug}`}>
-                              <MessageCircle className="h-4 w-4" /> Войти в чат конкурса
-                            </Link>
-                          </Button>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <BellRing className="h-4 w-4 text-gold" />
-                            Ожидайте приглашения администратора в чат конкурса.
-                          </div>
-                        )}
-                      </div>
                     )}
                   </Card>
                 );

@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { PageHero } from "@/components/ui/page-hero";
 import { Card } from "@/components/ui/card";
-import { Award, Scale, Sparkles } from "lucide-react";
+import { Scale, Gavel, Trophy } from "lucide-react";
 import { Ornament, SealMark } from "@/components/ui/ornament";
+import {
+  JURY_FORMATION,
+  JURY_EVALUATION,
+  JURY_AWARDS,
+  GRAND_PRIX_RULES,
+  FESTIVAL_2026,
+} from "@/lib/festival-info";
 
 interface JuryMember {
   id: string;
@@ -193,19 +200,19 @@ const fallbackJuryMembers: JuryMember[] = [
 
 const principles = [
   {
+    icon: Gavel,
+    title: "Формирование жюри",
+    text: "Жюри создаётся оргкомитетом. Представители оргкомитета не голосуют. Состав утверждается на совещании художественно-координационного совета.",
+  },
+  {
     icon: Scale,
-    title: "Объективность",
-    text: "Каждое выступление оценивается независимо по утверждённым критериям конкурса.",
+    title: "Оценка выступлений",
+    text: "Оценка проводится в каждом конкурсе, номинации и возрастной группе. Световое сопровождение не учитывается (кроме театральных коллективов).",
   },
   {
-    icon: Award,
-    title: "Профессионализм",
-    text: "В состав жюри входят заслуженные деятели искусств, педагоги вузов и лауреаты международных премий.",
-  },
-  {
-    icon: Sparkles,
-    title: "Поддержка",
-    text: "Помимо оценок, члены жюри проводят мастер-классы и индивидуальные консультации для участников.",
+    icon: Trophy,
+    title: "Награждение",
+    text: "Присуждаются звания участника, дипломантов и лауреатов I–III степени, специальные призы и Гран-при. Награждение — 19 апреля 2026 г.",
   },
 ];
 
@@ -234,14 +241,13 @@ const Jury = () => {
   const displayedMembers = members.length > 0 ? members : fallbackJuryMembers;
 
   useEffect(() => {
-    supabase
-      .from("jury_members")
-      .select("*")
-      .order("display_order")
-      .then(({ data }) => {
-        setMembers(data ?? []);
-        setLoading(false);
-      });
+    setMembers(fallbackJuryMembers);
+    setLoading(false);
+    api.getJury()
+      .then(({ members }) => {
+        if (members?.length) setMembers(members);
+      })
+      .catch(() => {});
   }, []);
 
   return (
@@ -253,8 +259,52 @@ const Jury = () => {
             Жюри <span className="italic text-gradient-gold">фестиваля</span>
           </>
         }
-        description="Признанные мастера, педагоги и эксперты в своих областях оценивают работы участников «Шёлкового пути»."
+        description="Раздел 5 Положения XV Международного фестиваля-конкурса «Шелковый путь», 2026: формирование жюри, оценка выступлений и награждение."
       />
+
+      {/* Положение: жюри */}
+      <section className="py-16 bg-pattern-silk">
+        <div className="container max-w-4xl">
+          <div className="text-center mb-10">
+            <span className="font-marcellus text-xs uppercase tracking-[0.32em] text-gold">Положение 2026</span>
+            <h2 className="mt-4 font-display text-3xl md:text-4xl">Жюри, оценка и награждение</h2>
+          </div>
+          <div className="grid md:grid-cols-2 gap-5 mb-5">
+            <Card className="p-6">
+              <h3 className="font-serif text-lg mb-3">Формирование жюри</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {JURY_FORMATION.map((item) => (
+                  <li key={item} className="flex gap-2"><span className="text-gold shrink-0">·</span><span>{item}</span></li>
+                ))}
+              </ul>
+            </Card>
+            <Card className="p-6">
+              <h3 className="font-serif text-lg mb-3">Правила оценки</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {JURY_EVALUATION.map((item) => (
+                  <li key={item} className="flex gap-2"><span className="text-gold shrink-0">·</span><span>{item}</span></li>
+                ))}
+              </ul>
+            </Card>
+          </div>
+          <Card className="p-6 mb-5">
+            <h3 className="font-serif text-lg mb-3">Присваиваемые звания и степени</h3>
+            <div className="flex flex-wrap gap-2">
+              {JURY_AWARDS.map((a) => (
+                <span key={a} className="rounded-full border border-gold/30 bg-gold/5 px-3 py-1 text-sm text-foreground/90">{a}</span>
+              ))}
+            </div>
+          </Card>
+          <Card className="p-6">
+            <h3 className="font-serif text-lg mb-3">Гран-при и вручение наград</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              {GRAND_PRIX_RULES.map((item) => (
+                <li key={item} className="flex gap-2"><span className="text-gold shrink-0">·</span><span>{item}</span></li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      </section>
 
       {/* Принципы оценки */}
       <section className="py-20">
@@ -291,11 +341,16 @@ const Jury = () => {
         <div className="container">
           <div className="text-center mb-14">
             <span className="font-marcellus text-xs uppercase tracking-[0.32em] text-gold">
-              Сезон 2025
+              Сезон {FESTIVAL_2026.season}
             </span>
             <h2 className="mt-4 font-display text-4xl md:text-5xl">
               Состав <span className="italic">жюри</span>
             </h2>
+            <p className="mt-4 max-w-2xl mx-auto text-sm text-muted-foreground leading-relaxed">
+              Согласно положению, в жюри входят деятели культуры и искусств, хореографы, вокалисты,
+              художники-модельеры, искусствоведы и представители шоу-бизнеса из Оренбурга, России и зарубежья.
+              Окончательный состав утверждается оргкомитетом перед фестивалем.
+            </p>
           </div>
 
           {loading && members.length === 0 ? (

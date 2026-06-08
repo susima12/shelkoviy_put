@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate, useParams, Link } from "@/lib/router-comp
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { useAuthReady } from "@/hooks/use-auth-ready";
 import { useCompetitions, type Competition } from "@/hooks/use-competitions";
 import type { CompetitionFormField } from "@/lib/competitions-data";
@@ -83,21 +83,18 @@ const Apply = () => {
 
   useEffect(() => {
     if (!isReady || !user) return;
-    supabase
-      .from("profiles")
-      .select("display_name, email")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.display_name && !form.getValues("leader_full_name")) {
-          form.setValue("leader_full_name", data.display_name);
-        }
-        if (data?.email && !form.getValues("email")) {
-          form.setValue("email", data.email);
-        } else if (user.email && !form.getValues("email")) {
-          form.setValue("email", user.email);
-        }
-      });
+    api.getProfile().then(({ profile }) => {
+      if (profile?.display_name && !form.getValues("leader_full_name")) {
+        form.setValue("leader_full_name", profile.display_name);
+      }
+      if (profile?.email && !form.getValues("email")) {
+        form.setValue("email", profile.email);
+      } else if (user.email && !form.getValues("email")) {
+        form.setValue("email", user.email);
+      }
+    }).catch(() => {
+      if (user.email && !form.getValues("email")) form.setValue("email", user.email);
+    });
   }, [isReady, user, form]);
 
   useEffect(() => {
@@ -175,21 +172,15 @@ const Apply = () => {
       return;
     }
     if (!selectedComp) return;
-    if (selectedComp.id.startsWith("static-")) {
-      toast.error("Сервер недоступен. Попробуйте позже или обратитесь в оргкомитет.");
-      return;
-    }
     if (!validateExtraFields()) return;
 
     setSubmitting(true);
     try {
       const payload = buildPayload(values, selectedComp);
-      const { error } = await supabase.from("applications").insert({
+      await api.submitApplication({
         ...payload,
         competition_id: selectedComp.id,
-        user_id: user.id,
-      } as any);
-      if (error) throw error;
+      });
       setSubmitted(true);
       toast.success("Заявка отправлена!");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -278,10 +269,7 @@ const Apply = () => {
           {compsError && (
             <div className="mb-6 flex items-start gap-3 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">
               <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-              <div>
-                Нет связи с сервером — показан список конкурсов из положения.
-                Отправка заявки будет доступна после восстановления соединения.
-              </div>
+              <div>Не удалось загрузить список конкурсов. Обновите страницу.</div>
             </div>
           )}
 

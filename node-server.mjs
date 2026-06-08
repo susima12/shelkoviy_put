@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
-import { join, extname } from "node:path";
+import { extname } from "node:path";
 import handler from "./dist/server/server.js";
 
 const port = Number(process.env.PORT) || 3000;

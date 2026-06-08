@@ -26,13 +26,33 @@ import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CompetitionsIndexRouteImport } from './routes/competitions.index'
 import { Route as CompetitionsSlugRouteImport } from './routes/competitions.$slug'
 import { Route as ChatSlugRouteImport } from './routes/chat.$slug'
 import { Route as ApplySlugRouteImport } from './routes/apply.$slug'
+import { Route as ApiNewsRouteImport } from './routes/api/news'
+import { Route as ApiJuryRouteImport } from './routes/api/jury'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiCompetitionsRouteImport } from './routes/api/competitions'
+import { Route as ApiApplicationsRouteImport } from './routes/api/applications'
 import { Route as AdminUsersRouteImport } from './routes/admin_.users'
 import { Route as AdminChatRouteImport } from './routes/admin_.chat'
 import { Route as ApiPublicSetupAdminsRouteImport } from './routes/api/public/setup-admins'
+import { Route as ApiProfilesMeRouteImport } from './routes/api/profiles/me'
+import { Route as ApiMessagesSearchRouteImport } from './routes/api/messages/search'
+import { Route as ApiMessagesConversationsRouteImport } from './routes/api/messages/conversations'
+import { Route as ApiMessagesConversationIdRouteImport } from './routes/api/messages/$conversationId'
+import { Route as ApiChatSlugRouteImport } from './routes/api/chat.$slug'
+import { Route as ApiAuthSignupRouteImport } from './routes/api/auth/signup'
+import { Route as ApiAuthSignoutRouteImport } from './routes/api/auth/signout'
+import { Route as ApiAuthSigninRouteImport } from './routes/api/auth/signin'
+import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
+import { Route as ApiAuthResetPasswordRouteImport } from './routes/api/auth/reset-password'
+import { Route as ApiAuthChangePasswordRouteImport } from './routes/api/auth/change-password'
+import { Route as ApiAuthChangeEmailRouteImport } from './routes/api/auth/change-email'
+import { Route as ApiApplicationsIdRouteImport } from './routes/api/applications.$id'
+import { Route as ApiAdminUsersRouteImport } from './routes/api/admin/users'
+import { Route as ApiAdminDashboardRouteImport } from './routes/api/admin/dashboard'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -119,6 +139,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompetitionsIndexRoute = CompetitionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CompetitionsRoute,
+} as any)
 const CompetitionsSlugRoute = CompetitionsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -134,9 +159,29 @@ const ApplySlugRoute = ApplySlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ApplyRoute,
 } as any)
+const ApiNewsRoute = ApiNewsRouteImport.update({
+  id: '/api/news',
+  path: '/api/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiJuryRoute = ApiJuryRouteImport.update({
+  id: '/api/jury',
+  path: '/api/jury',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCompetitionsRoute = ApiCompetitionsRouteImport.update({
+  id: '/api/competitions',
+  path: '/api/competitions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiApplicationsRoute = ApiApplicationsRouteImport.update({
+  id: '/api/applications',
+  path: '/api/applications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
@@ -152,6 +197,83 @@ const AdminChatRoute = AdminChatRouteImport.update({
 const ApiPublicSetupAdminsRoute = ApiPublicSetupAdminsRouteImport.update({
   id: '/api/public/setup-admins',
   path: '/api/public/setup-admins',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiProfilesMeRoute = ApiProfilesMeRouteImport.update({
+  id: '/api/profiles/me',
+  path: '/api/profiles/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMessagesSearchRoute = ApiMessagesSearchRouteImport.update({
+  id: '/api/messages/search',
+  path: '/api/messages/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMessagesConversationsRoute =
+  ApiMessagesConversationsRouteImport.update({
+    id: '/api/messages/conversations',
+    path: '/api/messages/conversations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiMessagesConversationIdRoute =
+  ApiMessagesConversationIdRouteImport.update({
+    id: '/api/messages/$conversationId',
+    path: '/api/messages/$conversationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiChatSlugRoute = ApiChatSlugRouteImport.update({
+  id: '/api/chat/$slug',
+  path: '/api/chat/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSignupRoute = ApiAuthSignupRouteImport.update({
+  id: '/api/auth/signup',
+  path: '/api/auth/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSignoutRoute = ApiAuthSignoutRouteImport.update({
+  id: '/api/auth/signout',
+  path: '/api/auth/signout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSigninRoute = ApiAuthSigninRouteImport.update({
+  id: '/api/auth/signin',
+  path: '/api/auth/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
+  id: '/api/auth/session',
+  path: '/api/auth/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthResetPasswordRoute = ApiAuthResetPasswordRouteImport.update({
+  id: '/api/auth/reset-password',
+  path: '/api/auth/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthChangePasswordRoute = ApiAuthChangePasswordRouteImport.update({
+  id: '/api/auth/change-password',
+  path: '/api/auth/change-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthChangeEmailRoute = ApiAuthChangeEmailRouteImport.update({
+  id: '/api/auth/change-email',
+  path: '/api/auth/change-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiApplicationsIdRoute = ApiApplicationsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiApplicationsRoute,
+} as any)
+const ApiAdminUsersRoute = ApiAdminUsersRouteImport.update({
+  id: '/api/admin/users',
+  path: '/api/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminDashboardRoute = ApiAdminDashboardRouteImport.update({
+  id: '/api/admin/dashboard',
+  path: '/api/admin/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -175,10 +297,30 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/applications': typeof ApiApplicationsRouteWithChildren
+  '/api/competitions': typeof ApiCompetitionsRoute
   '/api/health': typeof ApiHealthRoute
+  '/api/jury': typeof ApiJuryRoute
+  '/api/news': typeof ApiNewsRoute
   '/apply/$slug': typeof ApplySlugRoute
   '/chat/$slug': typeof ChatSlugRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/competitions/': typeof CompetitionsIndexRoute
+  '/api/admin/dashboard': typeof ApiAdminDashboardRoute
+  '/api/admin/users': typeof ApiAdminUsersRoute
+  '/api/applications/$id': typeof ApiApplicationsIdRoute
+  '/api/auth/change-email': typeof ApiAuthChangeEmailRoute
+  '/api/auth/change-password': typeof ApiAuthChangePasswordRoute
+  '/api/auth/reset-password': typeof ApiAuthResetPasswordRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/auth/signin': typeof ApiAuthSigninRoute
+  '/api/auth/signout': typeof ApiAuthSignoutRoute
+  '/api/auth/signup': typeof ApiAuthSignupRoute
+  '/api/chat/$slug': typeof ApiChatSlugRoute
+  '/api/messages/$conversationId': typeof ApiMessagesConversationIdRoute
+  '/api/messages/conversations': typeof ApiMessagesConversationsRoute
+  '/api/messages/search': typeof ApiMessagesSearchRoute
+  '/api/profiles/me': typeof ApiProfilesMeRoute
   '/api/public/setup-admins': typeof ApiPublicSetupAdminsRoute
 }
 export interface FileRoutesByTo {
@@ -187,7 +329,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/apply': typeof ApplyRouteWithChildren
   '/auth': typeof AuthRoute
-  '/competitions': typeof CompetitionsRouteWithChildren
   '/contacts': typeof ContactsRoute
   '/history': typeof HistoryRoute
   '/jury': typeof JuryRoute
@@ -201,10 +342,30 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/applications': typeof ApiApplicationsRouteWithChildren
+  '/api/competitions': typeof ApiCompetitionsRoute
   '/api/health': typeof ApiHealthRoute
+  '/api/jury': typeof ApiJuryRoute
+  '/api/news': typeof ApiNewsRoute
   '/apply/$slug': typeof ApplySlugRoute
   '/chat/$slug': typeof ChatSlugRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/competitions': typeof CompetitionsIndexRoute
+  '/api/admin/dashboard': typeof ApiAdminDashboardRoute
+  '/api/admin/users': typeof ApiAdminUsersRoute
+  '/api/applications/$id': typeof ApiApplicationsIdRoute
+  '/api/auth/change-email': typeof ApiAuthChangeEmailRoute
+  '/api/auth/change-password': typeof ApiAuthChangePasswordRoute
+  '/api/auth/reset-password': typeof ApiAuthResetPasswordRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/auth/signin': typeof ApiAuthSigninRoute
+  '/api/auth/signout': typeof ApiAuthSignoutRoute
+  '/api/auth/signup': typeof ApiAuthSignupRoute
+  '/api/chat/$slug': typeof ApiChatSlugRoute
+  '/api/messages/$conversationId': typeof ApiMessagesConversationIdRoute
+  '/api/messages/conversations': typeof ApiMessagesConversationsRoute
+  '/api/messages/search': typeof ApiMessagesSearchRoute
+  '/api/profiles/me': typeof ApiProfilesMeRoute
   '/api/public/setup-admins': typeof ApiPublicSetupAdminsRoute
 }
 export interface FileRoutesById {
@@ -228,10 +389,30 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/admin_/chat': typeof AdminChatRoute
   '/admin_/users': typeof AdminUsersRoute
+  '/api/applications': typeof ApiApplicationsRouteWithChildren
+  '/api/competitions': typeof ApiCompetitionsRoute
   '/api/health': typeof ApiHealthRoute
+  '/api/jury': typeof ApiJuryRoute
+  '/api/news': typeof ApiNewsRoute
   '/apply/$slug': typeof ApplySlugRoute
   '/chat/$slug': typeof ChatSlugRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/competitions/': typeof CompetitionsIndexRoute
+  '/api/admin/dashboard': typeof ApiAdminDashboardRoute
+  '/api/admin/users': typeof ApiAdminUsersRoute
+  '/api/applications/$id': typeof ApiApplicationsIdRoute
+  '/api/auth/change-email': typeof ApiAuthChangeEmailRoute
+  '/api/auth/change-password': typeof ApiAuthChangePasswordRoute
+  '/api/auth/reset-password': typeof ApiAuthResetPasswordRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/auth/signin': typeof ApiAuthSigninRoute
+  '/api/auth/signout': typeof ApiAuthSignoutRoute
+  '/api/auth/signup': typeof ApiAuthSignupRoute
+  '/api/chat/$slug': typeof ApiChatSlugRoute
+  '/api/messages/$conversationId': typeof ApiMessagesConversationIdRoute
+  '/api/messages/conversations': typeof ApiMessagesConversationsRoute
+  '/api/messages/search': typeof ApiMessagesSearchRoute
+  '/api/profiles/me': typeof ApiProfilesMeRoute
   '/api/public/setup-admins': typeof ApiPublicSetupAdminsRoute
 }
 export interface FileRouteTypes {
@@ -256,10 +437,30 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/admin/chat'
     | '/admin/users'
+    | '/api/applications'
+    | '/api/competitions'
     | '/api/health'
+    | '/api/jury'
+    | '/api/news'
     | '/apply/$slug'
     | '/chat/$slug'
     | '/competitions/$slug'
+    | '/competitions/'
+    | '/api/admin/dashboard'
+    | '/api/admin/users'
+    | '/api/applications/$id'
+    | '/api/auth/change-email'
+    | '/api/auth/change-password'
+    | '/api/auth/reset-password'
+    | '/api/auth/session'
+    | '/api/auth/signin'
+    | '/api/auth/signout'
+    | '/api/auth/signup'
+    | '/api/chat/$slug'
+    | '/api/messages/$conversationId'
+    | '/api/messages/conversations'
+    | '/api/messages/search'
+    | '/api/profiles/me'
     | '/api/public/setup-admins'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -268,7 +469,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/apply'
     | '/auth'
-    | '/competitions'
     | '/contacts'
     | '/history'
     | '/jury'
@@ -282,10 +482,30 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/admin/chat'
     | '/admin/users'
+    | '/api/applications'
+    | '/api/competitions'
     | '/api/health'
+    | '/api/jury'
+    | '/api/news'
     | '/apply/$slug'
     | '/chat/$slug'
     | '/competitions/$slug'
+    | '/competitions'
+    | '/api/admin/dashboard'
+    | '/api/admin/users'
+    | '/api/applications/$id'
+    | '/api/auth/change-email'
+    | '/api/auth/change-password'
+    | '/api/auth/reset-password'
+    | '/api/auth/session'
+    | '/api/auth/signin'
+    | '/api/auth/signout'
+    | '/api/auth/signup'
+    | '/api/chat/$slug'
+    | '/api/messages/$conversationId'
+    | '/api/messages/conversations'
+    | '/api/messages/search'
+    | '/api/profiles/me'
     | '/api/public/setup-admins'
   id:
     | '__root__'
@@ -308,10 +528,30 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/admin_/chat'
     | '/admin_/users'
+    | '/api/applications'
+    | '/api/competitions'
     | '/api/health'
+    | '/api/jury'
+    | '/api/news'
     | '/apply/$slug'
     | '/chat/$slug'
     | '/competitions/$slug'
+    | '/competitions/'
+    | '/api/admin/dashboard'
+    | '/api/admin/users'
+    | '/api/applications/$id'
+    | '/api/auth/change-email'
+    | '/api/auth/change-password'
+    | '/api/auth/reset-password'
+    | '/api/auth/session'
+    | '/api/auth/signin'
+    | '/api/auth/signout'
+    | '/api/auth/signup'
+    | '/api/chat/$slug'
+    | '/api/messages/$conversationId'
+    | '/api/messages/conversations'
+    | '/api/messages/search'
+    | '/api/profiles/me'
     | '/api/public/setup-admins'
   fileRoutesById: FileRoutesById
 }
@@ -335,8 +575,26 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  ApiApplicationsRoute: typeof ApiApplicationsRouteWithChildren
+  ApiCompetitionsRoute: typeof ApiCompetitionsRoute
   ApiHealthRoute: typeof ApiHealthRoute
+  ApiJuryRoute: typeof ApiJuryRoute
+  ApiNewsRoute: typeof ApiNewsRoute
   ChatSlugRoute: typeof ChatSlugRoute
+  ApiAdminDashboardRoute: typeof ApiAdminDashboardRoute
+  ApiAdminUsersRoute: typeof ApiAdminUsersRoute
+  ApiAuthChangeEmailRoute: typeof ApiAuthChangeEmailRoute
+  ApiAuthChangePasswordRoute: typeof ApiAuthChangePasswordRoute
+  ApiAuthResetPasswordRoute: typeof ApiAuthResetPasswordRoute
+  ApiAuthSessionRoute: typeof ApiAuthSessionRoute
+  ApiAuthSigninRoute: typeof ApiAuthSigninRoute
+  ApiAuthSignoutRoute: typeof ApiAuthSignoutRoute
+  ApiAuthSignupRoute: typeof ApiAuthSignupRoute
+  ApiChatSlugRoute: typeof ApiChatSlugRoute
+  ApiMessagesConversationIdRoute: typeof ApiMessagesConversationIdRoute
+  ApiMessagesConversationsRoute: typeof ApiMessagesConversationsRoute
+  ApiMessagesSearchRoute: typeof ApiMessagesSearchRoute
+  ApiProfilesMeRoute: typeof ApiProfilesMeRoute
   ApiPublicSetupAdminsRoute: typeof ApiPublicSetupAdminsRoute
 }
 
@@ -461,6 +719,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/competitions/': {
+      id: '/competitions/'
+      path: '/'
+      fullPath: '/competitions/'
+      preLoaderRoute: typeof CompetitionsIndexRouteImport
+      parentRoute: typeof CompetitionsRoute
+    }
     '/competitions/$slug': {
       id: '/competitions/$slug'
       path: '/$slug'
@@ -482,11 +747,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApplySlugRouteImport
       parentRoute: typeof ApplyRoute
     }
+    '/api/news': {
+      id: '/api/news'
+      path: '/api/news'
+      fullPath: '/api/news'
+      preLoaderRoute: typeof ApiNewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/jury': {
+      id: '/api/jury'
+      path: '/api/jury'
+      fullPath: '/api/jury'
+      preLoaderRoute: typeof ApiJuryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/health': {
       id: '/api/health'
       path: '/api/health'
       fullPath: '/api/health'
       preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/competitions': {
+      id: '/api/competitions'
+      path: '/api/competitions'
+      fullPath: '/api/competitions'
+      preLoaderRoute: typeof ApiCompetitionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/applications': {
+      id: '/api/applications'
+      path: '/api/applications'
+      fullPath: '/api/applications'
+      preLoaderRoute: typeof ApiApplicationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin_/users': {
@@ -510,6 +803,111 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSetupAdminsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/profiles/me': {
+      id: '/api/profiles/me'
+      path: '/api/profiles/me'
+      fullPath: '/api/profiles/me'
+      preLoaderRoute: typeof ApiProfilesMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/messages/search': {
+      id: '/api/messages/search'
+      path: '/api/messages/search'
+      fullPath: '/api/messages/search'
+      preLoaderRoute: typeof ApiMessagesSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/messages/conversations': {
+      id: '/api/messages/conversations'
+      path: '/api/messages/conversations'
+      fullPath: '/api/messages/conversations'
+      preLoaderRoute: typeof ApiMessagesConversationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/messages/$conversationId': {
+      id: '/api/messages/$conversationId'
+      path: '/api/messages/$conversationId'
+      fullPath: '/api/messages/$conversationId'
+      preLoaderRoute: typeof ApiMessagesConversationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat/$slug': {
+      id: '/api/chat/$slug'
+      path: '/api/chat/$slug'
+      fullPath: '/api/chat/$slug'
+      preLoaderRoute: typeof ApiChatSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/signup': {
+      id: '/api/auth/signup'
+      path: '/api/auth/signup'
+      fullPath: '/api/auth/signup'
+      preLoaderRoute: typeof ApiAuthSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/signout': {
+      id: '/api/auth/signout'
+      path: '/api/auth/signout'
+      fullPath: '/api/auth/signout'
+      preLoaderRoute: typeof ApiAuthSignoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/signin': {
+      id: '/api/auth/signin'
+      path: '/api/auth/signin'
+      fullPath: '/api/auth/signin'
+      preLoaderRoute: typeof ApiAuthSigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/session': {
+      id: '/api/auth/session'
+      path: '/api/auth/session'
+      fullPath: '/api/auth/session'
+      preLoaderRoute: typeof ApiAuthSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/reset-password': {
+      id: '/api/auth/reset-password'
+      path: '/api/auth/reset-password'
+      fullPath: '/api/auth/reset-password'
+      preLoaderRoute: typeof ApiAuthResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/change-password': {
+      id: '/api/auth/change-password'
+      path: '/api/auth/change-password'
+      fullPath: '/api/auth/change-password'
+      preLoaderRoute: typeof ApiAuthChangePasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/change-email': {
+      id: '/api/auth/change-email'
+      path: '/api/auth/change-email'
+      fullPath: '/api/auth/change-email'
+      preLoaderRoute: typeof ApiAuthChangeEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/applications/$id': {
+      id: '/api/applications/$id'
+      path: '/$id'
+      fullPath: '/api/applications/$id'
+      preLoaderRoute: typeof ApiApplicationsIdRouteImport
+      parentRoute: typeof ApiApplicationsRoute
+    }
+    '/api/admin/users': {
+      id: '/api/admin/users'
+      path: '/api/admin/users'
+      fullPath: '/api/admin/users'
+      preLoaderRoute: typeof ApiAdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/dashboard': {
+      id: '/api/admin/dashboard'
+      path: '/api/admin/dashboard'
+      fullPath: '/api/admin/dashboard'
+      preLoaderRoute: typeof ApiAdminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -525,14 +923,28 @@ const ApplyRouteWithChildren = ApplyRoute._addFileChildren(ApplyRouteChildren)
 
 interface CompetitionsRouteChildren {
   CompetitionsSlugRoute: typeof CompetitionsSlugRoute
+  CompetitionsIndexRoute: typeof CompetitionsIndexRoute
 }
 
 const CompetitionsRouteChildren: CompetitionsRouteChildren = {
   CompetitionsSlugRoute: CompetitionsSlugRoute,
+  CompetitionsIndexRoute: CompetitionsIndexRoute,
 }
 
 const CompetitionsRouteWithChildren = CompetitionsRoute._addFileChildren(
   CompetitionsRouteChildren,
+)
+
+interface ApiApplicationsRouteChildren {
+  ApiApplicationsIdRoute: typeof ApiApplicationsIdRoute
+}
+
+const ApiApplicationsRouteChildren: ApiApplicationsRouteChildren = {
+  ApiApplicationsIdRoute: ApiApplicationsIdRoute,
+}
+
+const ApiApplicationsRouteWithChildren = ApiApplicationsRoute._addFileChildren(
+  ApiApplicationsRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
@@ -555,8 +967,26 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   AdminChatRoute: AdminChatRoute,
   AdminUsersRoute: AdminUsersRoute,
+  ApiApplicationsRoute: ApiApplicationsRouteWithChildren,
+  ApiCompetitionsRoute: ApiCompetitionsRoute,
   ApiHealthRoute: ApiHealthRoute,
+  ApiJuryRoute: ApiJuryRoute,
+  ApiNewsRoute: ApiNewsRoute,
   ChatSlugRoute: ChatSlugRoute,
+  ApiAdminDashboardRoute: ApiAdminDashboardRoute,
+  ApiAdminUsersRoute: ApiAdminUsersRoute,
+  ApiAuthChangeEmailRoute: ApiAuthChangeEmailRoute,
+  ApiAuthChangePasswordRoute: ApiAuthChangePasswordRoute,
+  ApiAuthResetPasswordRoute: ApiAuthResetPasswordRoute,
+  ApiAuthSessionRoute: ApiAuthSessionRoute,
+  ApiAuthSigninRoute: ApiAuthSigninRoute,
+  ApiAuthSignoutRoute: ApiAuthSignoutRoute,
+  ApiAuthSignupRoute: ApiAuthSignupRoute,
+  ApiChatSlugRoute: ApiChatSlugRoute,
+  ApiMessagesConversationIdRoute: ApiMessagesConversationIdRoute,
+  ApiMessagesConversationsRoute: ApiMessagesConversationsRoute,
+  ApiMessagesSearchRoute: ApiMessagesSearchRoute,
+  ApiProfilesMeRoute: ApiProfilesMeRoute,
   ApiPublicSetupAdminsRoute: ApiPublicSetupAdminsRoute,
 }
 export const routeTree = rootRouteImport

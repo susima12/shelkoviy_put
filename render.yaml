@@ -1,5 +1,4 @@
-# Render Blueprint — один сервис: фронтенд + SSR + API
-# https://render.com/docs/blueprint-spec
+# Render Blueprint — фронтенд + SSR + API + SQLite
 services:
   - type: web
     name: shelk-put
@@ -14,16 +13,7 @@ services:
         value: "20"
       - key: NODE_ENV
         value: production
-      # ↓ Заполните в Render Dashboard → Environment (Settings → Environment Variables)
-      - key: SUPABASE_URL
+      - key: JWT_SECRET
         sync: false
-      - key: SUPABASE_PUBLISHABLE_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: VITE_SUPABASE_URL
-        sync: false
-      - key: VITE_SUPABASE_PUBLISHABLE_KEY
-        sync: false
-      - key: VITE_SUPABASE_PROJECT_ID
-        sync: false
+      - key: DATABASE_PATH
+        value: ./data/festival.db

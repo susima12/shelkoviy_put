@@ -1,1 +1,0 @@
-# shelkoviy_put

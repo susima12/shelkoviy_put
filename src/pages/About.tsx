@@ -1,6 +1,17 @@
 import { PageHero } from "@/components/ui/page-hero";
 import { Card } from "@/components/ui/card";
 import { Ornament, SealMark } from "@/components/ui/ornament";
+import { Link } from "@/lib/router-compat";
+import { Button } from "@/components/ui/button";
+import {
+  FESTIVAL_2026,
+  ORGANIZERS,
+  INFO_PARTNERS_2026,
+  FESTIVAL_GOALS,
+  FESTIVAL_PROGRAM,
+  GENERAL_RULES,
+  JURY_INFO,
+} from "@/lib/festival-info";
 import {
   BookOpen,
   Building2,
@@ -65,8 +76,66 @@ const About = () => (
           <span className="italic text-gradient-gold">«Шёлковый путь»</span>
         </>
       }
-      description="Международный фестиваль детского и юношеского творчества, объединяющий таланты со всех уголков мира на протяжении более 15 лет."
+      description="XV Международный фестиваль-конкурс 2026: 16–19 апреля, г. Оренбург. Шесть конкурсных направлений согласно официальному положению."
     />
+
+    {/* Положение 2026 */}
+    <section className="py-16 bg-pattern-silk">
+      <div className="container max-w-4xl">
+        <div className="text-center mb-10">
+          <span className="font-marcellus text-xs uppercase tracking-[0.32em] text-gold">Положение 2026</span>
+          <h2 className="mt-4 font-display text-3xl md:text-4xl">Основные сведения о фестивале</h2>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4 mb-8">
+          <Card className="p-6">
+            <div className="text-xs font-marcellus uppercase tracking-widest text-muted-foreground mb-1">Даты</div>
+            <div className="font-display text-xl">{FESTIVAL_2026.dates}</div>
+          </Card>
+          <Card className="p-6">
+            <div className="text-xs font-marcellus uppercase tracking-widest text-muted-foreground mb-1">Место</div>
+            <div className="text-sm leading-relaxed">{FESTIVAL_2026.venue}</div>
+          </Card>
+        </div>
+        <Card className="p-6 mb-6">
+          <h3 className="font-serif text-lg mb-3">Организаторы</h3>
+          <ul className="space-y-1.5 text-sm text-muted-foreground">
+            {ORGANIZERS.map((o) => (
+              <li key={o} className="flex gap-2"><span className="text-gold">·</span>{o}</li>
+            ))}
+          </ul>
+        </Card>
+        <Card className="p-6 mb-6">
+          <h3 className="font-serif text-lg mb-3">Цель и задачи (раздел 1 положения)</h3>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            {FESTIVAL_GOALS.map((g) => (
+              <li key={g} className="flex gap-2"><span className="text-gold shrink-0">·</span><span>{g}</span></li>
+            ))}
+          </ul>
+        </Card>
+        <Card className="p-6 mb-6">
+          <h3 className="font-serif text-lg mb-3">Предварительная программа</h3>
+          <ul className="space-y-3 text-sm text-muted-foreground">
+            {FESTIVAL_PROGRAM.map((d) => (
+              <li key={d.date}>
+                <span className="font-medium text-foreground">{d.date}</span> — {d.text}
+              </li>
+            ))}
+          </ul>
+        </Card>
+        <Card className="p-6 mb-8">
+          <h3 className="font-serif text-lg mb-3">Общие условия участия</h3>
+          <ul className="space-y-1.5 text-sm text-muted-foreground max-h-64 overflow-y-auto pr-2">
+            {GENERAL_RULES.map((r) => (
+              <li key={r} className="flex gap-2"><span className="text-gold shrink-0">·</span><span>{r}</span></li>
+            ))}
+          </ul>
+        </Card>
+        <div className="flex flex-wrap gap-3 justify-center">
+          <Button asChild variant="festival"><Link to="/competitions">Все конкурсы</Link></Button>
+          <Button asChild variant="outline"><Link to="/payment">Реквизиты и оплата</Link></Button>
+        </div>
+      </div>
+    </section>
 
     {/* Вступление с буквицей */}
     <section className="py-20">
@@ -90,7 +159,7 @@ const About = () => (
         <div className="grid sm:grid-cols-3 gap-5">
           {[
             { v: "15+", l: "Лет фестивалю" },
-            { v: "10", l: "Конкурсных направлений" },
+            { v: "6", l: "Конкурсных направлений" },
             { v: "1000+", l: "Участников ежегодно" },
           ].map((s) => (
             <Card
@@ -179,6 +248,29 @@ const About = () => (
             </li>
           ))}
         </ol>
+      </div>
+    </section>
+
+    {/* Жюри и информационные партнёры */}
+    <section className="py-20 bg-secondary/30">
+      <div className="container max-w-4xl grid md:grid-cols-2 gap-6">
+        <Card className="p-7">
+          <h2 className="font-display text-2xl mb-4">Жюри и награждение</h2>
+          <ul className="space-y-2 text-sm text-muted-foreground mb-4">
+            {JURY_INFO.map((j) => (
+              <li key={j} className="flex gap-2"><span className="text-gold">·</span>{j}</li>
+            ))}
+          </ul>
+          <Link to="/jury" className="text-sm text-gold hover:underline">Подробнее о жюри и награждении →</Link>
+        </Card>
+        <Card className="p-7">
+          <h2 className="font-display text-2xl mb-4">Информационные партнёры 2026</h2>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            {INFO_PARTNERS_2026.map((p) => (
+              <li key={p} className="flex gap-2"><span className="text-gold">·</span>{p}</li>
+            ))}
+          </ul>
+        </Card>
       </div>
     </section>
 

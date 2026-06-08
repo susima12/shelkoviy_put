@@ -19,6 +19,12 @@ dist-ssr
 .env.local
 .env.*.local
 
+# SQLite database (локально)
+data/
+*.db
+*.db-wal
+*.db-shm
+
 # Старый мёртвый .env не коммитить — используйте .env.example
 
 # Wrangler / Cloudflare

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { PageHero } from "@/components/ui/page-hero";
 import { Card } from "@/components/ui/card";
 import { Newspaper } from "lucide-react";
@@ -9,7 +9,7 @@ import { ru } from "date-fns/locale";
 const News = () => {
   const [news, setNews] = useState<any[]>([]);
   useEffect(() => {
-    supabase.from("news").select("*").order("published_at", { ascending: false }).then(({ data }) => setNews(data ?? []));
+    api.getNews().then(({ news }) => setNews(news ?? [])).catch(() => setNews([]));
   }, []);
 
   return (

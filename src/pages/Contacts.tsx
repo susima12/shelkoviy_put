@@ -1,17 +1,24 @@
 import { PageHero } from "@/components/ui/page-hero";
 import { Card } from "@/components/ui/card";
-import { Mail, MapPin, Phone, Clock } from "lucide-react";
+import { Mail, MapPin, Phone, Clock, Calendar } from "lucide-react";
+import { FESTIVAL_2026, ORGANIZERS } from "@/lib/festival-info";
 
 const Contacts = () => (
   <>
-    <PageHero eyebrow="Связаться с нами" title="Контакты" description="Оргкомитет фестиваля «Шёлковый путь» в Оренбурге." />
+    <PageHero
+      eyebrow="Связаться с нами"
+      title="Контакты"
+      description="Оргкомитет XV Международного фестиваля-конкурса «Шёлковый путь», 2026."
+    />
     <section className="py-20">
       <div className="container max-w-4xl grid sm:grid-cols-2 gap-5">
         {[
-          { icon: MapPin, t: "Адрес", v: "460035, Россия,\nг. Оренбург, ул. Мичурина, д. 4" },
-          { icon: Mail, t: "Email для заявок", v: "zayavka@shelk-put.com" },
-          { icon: Phone, t: "Телефон оргкомитета", v: "+7 (3532) 70-31-62" },
-          { icon: Clock, t: "Часы работы", v: "Пн–Пт: 10:00 – 18:00\nМСК+2" },
+          { icon: MapPin, t: "Место проведения фестиваля", v: FESTIVAL_2026.venue },
+          { icon: MapPin, t: "Адрес оператора персональных данных", v: FESTIVAL_2026.operatorAddress },
+          { icon: Mail, t: "Email для заявок и оплаты", v: FESTIVAL_2026.email },
+          { icon: Phone, t: "Телефон оргкомитета", v: FESTIVAL_2026.phone },
+          { icon: Calendar, t: "Даты фестиваля", v: FESTIVAL_2026.dates },
+          { icon: Clock, t: "Срок подачи заявок и материалов", v: `до ${FESTIVAL_2026.applicationDeadline}` },
         ].map((c) => (
           <Card key={c.t} className="p-7 hover:shadow-elegant transition-silk">
             <c.icon className="h-7 w-7 text-gold mb-4" />
@@ -21,14 +28,24 @@ const Contacts = () => (
         ))}
       </div>
 
-      <div className="container max-w-4xl mt-10">
+      <div className="container max-w-4xl mt-10 space-y-5">
         <Card className="p-8 bg-secondary/40">
+          <h3 className="font-serif text-2xl mb-3">Организаторы фестиваля-конкурса</h3>
+          <ul className="space-y-2 text-muted-foreground">
+            {ORGANIZERS.map((org) => (
+              <li key={org} className="flex gap-2">
+                <span className="text-gold">·</span> {org}
+              </li>
+            ))}
+          </ul>
+        </Card>
+
+        <Card className="p-8">
           <h3 className="font-serif text-2xl mb-3">Учредитель</h3>
           <p className="text-muted-foreground">
             Автономная некоммерческая организация детского и юношеского
             творчества «Шёлковый путь» (АНО «Шёлковый путь» / SILK WAY) основана
-            в 2010 году. Создана в целях оказания услуг в области
-            художественного, литературного и исполнительского творчества.
+            в 2010 году. Официальный сайт фестиваля: {FESTIVAL_2026.website}
           </p>
         </Card>
       </div>

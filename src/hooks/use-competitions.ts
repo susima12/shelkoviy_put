@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api-client";
 import { FESTIVAL_COMPETITIONS, type StaticCompetition } from "@/lib/competitions-data";
 
 export type Competition = {
@@ -13,37 +13,18 @@ export type Competition = {
   age_categories: string[];
   nominations: string[];
   org_fee?: string;
+  stages?: string[];
+  criteria?: string[];
+  fee_details?: string[];
+  requirements?: string[];
+  coordinators?: StaticCompetition["coordinators"];
+  payment_note?: string;
   formFields?: StaticCompetition["formFields"];
 };
 
-let cache: Competition[] | null = null;
-let cacheTime = 0;
-const CACHE_TTL_MS = 5 * 60 * 1000;
-
-function mergeWithStatic(row: Record<string, unknown>): Competition {
-  const staticData = FESTIVAL_COMPETITIONS.find((c) => c.slug === row.slug);
+function staticToCompetition(c: StaticCompetition): Competition {
   return {
-    id: row.id as string,
-    slug: row.slug as string,
-    name: (row.name as string) || staticData?.name || "",
-    short_description: (row.short_description as string | null) ?? staticData?.short_description ?? null,
-    description: (row.description as string | null) ?? staticData?.description ?? null,
-    display_order: (row.display_order as number) ?? staticData?.display_order ?? 0,
-    accepting_applications: (row.accepting_applications as boolean) ?? true,
-    age_categories: (row.age_categories as string[])?.length
-      ? (row.age_categories as string[])
-      : staticData?.age_categories ?? [],
-    nominations: (row.nominations as string[])?.length
-      ? (row.nominations as string[])
-      : staticData?.nominations ?? [],
-    org_fee: staticData?.org_fee,
-    formFields: staticData?.formFields,
-  };
-}
-
-function staticFallback(): Competition[] {
-  return FESTIVAL_COMPETITIONS.map((c) => ({
-    id: `static-${c.slug}`,
+    id: c.slug,
     slug: c.slug,
     name: c.name,
     short_description: c.short_description,
@@ -53,8 +34,58 @@ function staticFallback(): Competition[] {
     age_categories: c.age_categories,
     nominations: c.nominations,
     org_fee: c.org_fee,
+    stages: c.stages,
+    criteria: c.criteria,
+    fee_details: c.fee_details,
+    requirements: c.requirements,
+    coordinators: c.coordinators,
+    payment_note: c.payment_note,
     formFields: c.formFields,
-  }));
+  };
+}
+
+function getStaticCompetitions(options?: { acceptingOnly?: boolean; limit?: number }) {
+  let items = FESTIVAL_COMPETITIONS.map(staticToCompetition);
+  if (options?.acceptingOnly) items = items.filter((c) => c.accepting_applications);
+  if (options?.limit) items = items.slice(0, options.limit);
+  return items;
+}
+
+let cache: Competition[] | null = null;
+let cacheTime = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+function mergeWithStatic(row: {
+  id: string;
+  slug: string;
+  name: string;
+  short_description: string | null;
+  description?: string | null;
+  display_order: number;
+  accepting_applications: boolean;
+  age_categories: string[];
+  nominations: string[];
+}): Competition {
+  const staticData = FESTIVAL_COMPETITIONS.find((c) => c.slug === row.slug);
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name || staticData?.name || "",
+    short_description: row.short_description ?? staticData?.short_description ?? null,
+    description: row.description ?? staticData?.description ?? null,
+    display_order: row.display_order ?? staticData?.display_order ?? 0,
+    accepting_applications: row.accepting_applications ?? true,
+    age_categories: row.age_categories?.length ? row.age_categories : staticData?.age_categories ?? [],
+    nominations: row.nominations?.length ? row.nominations : staticData?.nominations ?? [],
+    org_fee: staticData?.org_fee,
+    stages: staticData?.stages,
+    criteria: staticData?.criteria,
+    fee_details: staticData?.fee_details,
+    requirements: staticData?.requirements,
+    coordinators: staticData?.coordinators,
+    payment_note: staticData?.payment_note,
+    formFields: staticData?.formFields,
+  };
 }
 
 export async function fetchCompetitions(options?: {
@@ -69,16 +100,10 @@ export async function fetchCompetitions(options?: {
   }
 
   try {
-    let query = supabase
-      .from("competitions")
-      .select("id, slug, name, short_description, description, display_order, accepting_applications, age_categories, nominations")
-      .order("display_order");
-
-    if (options?.acceptingOnly) query = query.eq("accepting_applications", true);
-    if (options?.limit) query = query.limit(options.limit);
-
-    const { data, error } = await query;
-    if (error) throw error;
+    const { data } = await api.getCompetitions({
+      acceptingOnly: options?.acceptingOnly,
+      limit: options?.limit,
+    });
 
     if (data?.length) {
       const knownSlugs = new Set(FESTIVAL_COMPETITIONS.map((c) => c.slug));
@@ -93,24 +118,25 @@ export async function fetchCompetitions(options?: {
       }
     }
   } catch (e) {
-    console.warn("[competitions] Supabase fetch failed, using static data", e);
-    const fallback = staticFallback();
-    cache = fallback;
-    cacheTime = Date.now();
+    console.warn("[competitions] API fetch failed", e);
     const msg = e instanceof Error ? e.message : String(e);
-    let items = fallback;
-    if (options?.acceptingOnly) items = items.filter((c) => c.accepting_applications);
-    if (options?.limit) items = items.slice(0, options.limit);
-    return { data: items, fromCache: false, error: msg };
+    const fallback = getStaticCompetitions(options);
+    if (fallback.length) {
+      cache = fallback;
+      cacheTime = Date.now();
+      return { data: fallback, fromCache: false, error: msg };
+    }
+    return { data: cache ?? [], fromCache: false, error: msg };
   }
 
-  const fallback = staticFallback();
-  cache = fallback;
-  cacheTime = Date.now();
-  let items = fallback;
-  if (options?.acceptingOnly) items = items.filter((c) => c.accepting_applications);
-  if (options?.limit) items = items.slice(0, options.limit);
-  return { data: items, fromCache: false };
+  const fallback = getStaticCompetitions(options);
+  if (fallback.length) {
+    cache = fallback;
+    cacheTime = Date.now();
+    return { data: fallback, fromCache: false };
+  }
+
+  return { data: cache ?? [], fromCache: false };
 }
 
 export function useCompetitions(options?: { acceptingOnly?: boolean; limit?: number }) {

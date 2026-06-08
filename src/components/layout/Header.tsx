@@ -1,7 +1,7 @@
 import { Link, NavLink, useLocation, useNavigate } from "@/lib/router-compat";
 import { useEffect, useState } from "react";
 import { Menu, X, LogIn, LogOut, User, MessageSquare } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api, notifyAuthChange, onAuthChange, restoreSession, setToken } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { LogoLink } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
@@ -25,30 +25,21 @@ export const Header = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const { pathname } = useLocation();
   const nav = useNavigate();
+  const onDark = !scrolled;
 
   useEffect(() => {
-    const load = async (uid: string | null, mail: string | null) => {
-      setEmail(mail);
-      if (!uid) { setIsAdmin(false); return; }
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", uid)
-        .eq("role", "admin")
-        .maybeSingle();
-      setIsAdmin(!!data);
+    const load = (user: { email?: string; is_admin?: boolean } | null) => {
+      setEmail(user?.email ?? null);
+      setIsAdmin(!!user?.is_admin);
     };
-    supabase.auth.getSession().then(({ data }) => {
-      load(data.session?.user?.id ?? null, data.session?.user?.email ?? null);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => {
-      load(sess?.user?.id ?? null, sess?.user?.email ?? null);
-    });
-    return () => sub.subscription.unsubscribe();
+    restoreSession().then(load);
+    return onAuthChange(load);
   }, []);
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    await api.signOut();
+    setToken(null);
+    notifyAuthChange(null);
     nav("/");
   };
 
@@ -63,6 +54,27 @@ export const Header = () => {
     setOpen(false);
   }, [pathname]);
 
+  const navLinkClass = (isActive: boolean) =>
+    cn(
+      "px-2.5 py-2 text-sm font-medium rounded-md transition-silk whitespace-nowrap",
+      onDark
+        ? "text-[hsl(40_30%_90%)] hover:text-[hsl(40_75%_70%)] hover:bg-[hsl(40_20%_90%/0.12)]"
+        : "text-foreground/75 hover:text-foreground hover:bg-secondary/60",
+      isActive &&
+        (onDark
+          ? "text-[hsl(345_55%_30%)] bg-[hsl(40_25%_92%)]"
+          : "text-primary bg-secondary")
+    );
+
+  /** Светлый текст на тёмной шапке (до скролла) */
+  const authLightClass = onDark
+    ? "text-[hsl(40_35%_92%)] hover:text-[hsl(40_75%_70%)] hover:bg-[hsl(40_20%_90%/0.12)]"
+    : "text-foreground/85 hover:text-foreground hover:bg-secondary/60";
+
+  const authOutlineClass = onDark
+    ? "border-[hsl(40_30%_70%/0.45)] text-[hsl(40_35%_92%)] bg-[hsl(340_30%_14%/0.6)] hover:bg-[hsl(40_20%_90%/0.12)] hover:text-[hsl(40_75%_70%)]"
+    : "";
+
   return (
     <header
       className={cn(
@@ -72,51 +84,41 @@ export const Header = () => {
           : "bg-[hsl(340_40%_6%/0.55)] backdrop-blur-sm"
       )}
     >
-      <div className="container flex items-center justify-between h-20">
+      <div className="container flex items-center justify-between gap-3 h-20 min-w-0">
         <LogoLink size="lg" variant={scrolled ? "light" : "dark"} />
 
-        <nav className="hidden xl:flex items-center gap-1">
+        {/* Десктоп: 2xl+ чтобы при входе кнопки не ломали вёрстку */}
+        <nav className="hidden 2xl:flex items-center gap-0.5 min-w-0 flex-1 justify-center max-w-3xl">
           {NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) =>
-                cn(
-                  "px-3 py-2 text-sm font-medium rounded-md transition-silk",
-                  scrolled
-                    ? "text-foreground/75 hover:text-foreground hover:bg-secondary/60"
-                    : "text-[hsl(40_30%_90%)] hover:text-[hsl(40_75%_70%)] hover:bg-[hsl(40_20%_90%/0.12)]",
-                  isActive &&
-                    (scrolled
-                      ? "text-primary bg-secondary"
-                      : "text-[hsl(345_55%_30%)] bg-[hsl(40_25%_92%)]")
-                )
-              }
-            >
+            <NavLink key={item.to} to={item.to} end={item.to === "/"} className={({ isActive }) => navLinkClass(isActive)}>
               {item.label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="hidden xl:flex items-center gap-3">
+        <div className="hidden 2xl:flex items-center gap-2 shrink-0">
           {email ? (
             <>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/messages"><MessageSquare className="h-4 w-4" /> Сообщения</Link>
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link to={isAdmin ? "/admin" : "/profile"}>
-                  <User className="h-4 w-4" /> Кабинет
+              <Button asChild variant="ghost" size="sm" className={authLightClass}>
+                <Link to="/messages">
+                  <MessageSquare className="h-4 w-4" /> Сообщения
                 </Link>
               </Button>
-              <Button variant="ghost" size="sm" onClick={logout}>
+              <Button asChild variant="outline" size="sm" className={authOutlineClass}>
+                <Link to={isAdmin ? "/admin" : "/profile"}>
+                  <User className="h-4 w-4" />
+                  Кабинет
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" className={authLightClass} onClick={logout}>
                 <LogOut className="h-4 w-4" /> Выйти
               </Button>
             </>
           ) : (
-            <Button asChild variant="outline" size="sm">
-              <Link to="/auth"><LogIn className="h-4 w-4" /> Войти</Link>
+            <Button asChild variant="outline" size="sm" className={authOutlineClass}>
+              <Link to="/auth">
+                <LogIn className="h-4 w-4" /> Войти
+              </Link>
             </Button>
           )}
           <Button asChild variant="festival" size="sm">
@@ -125,7 +127,11 @@ export const Header = () => {
         </div>
 
         <button
-          className="xl:hidden p-2"
+          type="button"
+          className={cn(
+            "2xl:hidden p-2 rounded-md shrink-0 transition-silk",
+            onDark ? "text-[hsl(40_35%_92%)] hover:bg-[hsl(40_20%_90%/0.12)]" : "text-foreground hover:bg-secondary/60"
+          )}
           onClick={() => setOpen(!open)}
           aria-label="Меню"
         >
@@ -134,7 +140,7 @@ export const Header = () => {
       </div>
 
       {open && (
-        <div className="xl:hidden bg-[hsl(340_40%_9%/0.96)] backdrop-blur-xl border-t border-gold/20 shadow-elegant">
+        <div className="2xl:hidden bg-[hsl(340_40%_9%/0.96)] backdrop-blur-xl border-t border-gold/20 shadow-elegant max-h-[calc(100vh-5rem)] overflow-y-auto">
           <nav className="container flex flex-col py-4 gap-1">
             {NAV.map((item) => (
               <NavLink
@@ -156,21 +162,41 @@ export const Header = () => {
             <div className="mt-3 flex flex-col gap-2 border-t border-gold/20 pt-3">
               {email ? (
                 <>
-                  <Button asChild variant="outline">
-                    <Link to="/messages"><MessageSquare className="h-4 w-4" /> Сообщения</Link>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="border-[hsl(40_30%_70%/0.45)] text-[hsl(40_35%_92%)] bg-transparent hover:bg-[hsl(40_20%_90%/0.12)]"
+                  >
+                    <Link to="/messages">
+                      <MessageSquare className="h-4 w-4" /> Сообщения
+                    </Link>
                   </Button>
-                  <Button asChild variant="outline">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="border-[hsl(40_30%_70%/0.45)] text-[hsl(40_35%_92%)] bg-transparent hover:bg-[hsl(40_20%_90%/0.12)]"
+                  >
                     <Link to={isAdmin ? "/admin" : "/profile"}>
                       <User className="h-4 w-4" /> Кабинет
                     </Link>
                   </Button>
-                  <Button variant="ghost" onClick={logout} className="text-[hsl(40_35%_92%)]">
+                  <Button
+                    variant="ghost"
+                    onClick={logout}
+                    className="text-[hsl(40_35%_92%)] hover:bg-[hsl(40_20%_90%/0.12)] hover:text-[hsl(40_75%_70%)] justify-start"
+                  >
                     <LogOut className="h-4 w-4" /> Выйти
                   </Button>
                 </>
               ) : (
-                <Button asChild variant="outline">
-                  <Link to="/auth"><LogIn className="h-4 w-4" /> Войти</Link>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-[hsl(40_30%_70%/0.45)] text-[hsl(40_35%_92%)] bg-transparent hover:bg-[hsl(40_20%_90%/0.12)]"
+                >
+                  <Link to="/auth">
+                    <LogIn className="h-4 w-4" /> Войти
+                  </Link>
                 </Button>
               )}
               <Button asChild variant="festival">

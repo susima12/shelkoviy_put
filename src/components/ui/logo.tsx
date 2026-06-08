@@ -1,5 +1,5 @@
 import { Link } from "@/lib/router-compat";
-import logo from "@/assets/logo-light.svg";
+import logo from "@/assets/logo.png";
 
 type LogoProps = {
   size?: "sm" | "md" | "lg";
@@ -19,7 +19,7 @@ export const Logo = ({ size = "md", showText = true, className = "", variant = "
     <div
       className={`${sizes[size]} shrink-0 rounded-full bg-background/95 p-1 shadow-md ring-2 ring-gold/40 flex items-center justify-center`}
     >
-      <img src={logo} alt="Шёлковый путь" className="h-full w-full object-contain" />
+      <img src={logo} alt="Шёлковый путь" className="h-full w-full object-contain rounded-full" />
     </div>
     {showText && (
       <div className="hidden sm:flex flex-col leading-tight">

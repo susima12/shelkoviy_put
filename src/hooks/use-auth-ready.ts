@@ -1,45 +1,27 @@
 import { useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { type ApiUser, onAuthChange, restoreSession } from "@/lib/api-client";
 
-/**
- * Waits for Supabase to restore the session from storage before resolving.
- * Use this in any component that queries protected tables on mount —
- * otherwise the first request fires with the anon key and RLS returns empty.
- */
 export function useAuthReady() {
   const [isReady, setIsReady] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ApiUser | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    const fallback = window.setTimeout(() => {
+    restoreSession().then((u) => {
       if (!mounted) return;
-      setIsReady(true);
-    }, 1500);
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      window.clearTimeout(fallback);
-      setUser(session?.user ?? null);
-      setIsReady(true);
-    }).catch(() => {
-      if (!mounted) return;
-      window.clearTimeout(fallback);
-      setUser(null);
+      setUser(u);
       setIsReady(true);
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+    const unsub = onAuthChange((u) => {
       if (!mounted) return;
-      setUser(session?.user ?? null);
+      setUser(u);
       setIsReady(true);
     });
 
     return () => {
       mounted = false;
-      window.clearTimeout(fallback);
-      sub.subscription.unsubscribe();
+      unsub();
     };
   }, []);
 
