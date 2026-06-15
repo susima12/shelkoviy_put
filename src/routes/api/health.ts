@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getDb, ensureAdminAccounts } from "@/server/db";
+import { getDb } from "@/server/db";
 
 export const Route = createFileRoute("/api/health")({
   server: {
@@ -7,12 +7,12 @@ export const Route = createFileRoute("/api/health")({
       GET: async () => {
         try {
           const db = getDb();
-          const admins = ensureAdminAccounts(db);
           const row = db.prepare("SELECT COUNT(*) as c FROM competitions").get() as { c: number };
+          const admins = db.prepare("SELECT COUNT(*) as c FROM user_roles WHERE role = 'admin'").get() as { c: number };
           const body = {
             ok: true,
             service: "shelk-put",
-            database: { connected: true, competitions: row.c, admins: admins.length },
+            database: { connected: true, competitions: row.c, admins: admins.c },
             timestamp: new Date().toISOString(),
           };
           return new Response(JSON.stringify(body, null, 2), {

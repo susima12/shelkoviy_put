@@ -8,9 +8,17 @@ export default defineConfig({
   plugins: [
     tsConfigPaths(),
     tailwindcss(),
-    tanstackStart({
-      target: "node-server",
-    }),
+    tanstackStart(),
     viteReact(),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("lucide-react")) return "lucide";
+          if (id.includes("node_modules")) return "vendor";
+        },
+      },
+    },
+  },
 });

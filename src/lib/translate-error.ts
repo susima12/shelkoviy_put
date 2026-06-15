@@ -28,6 +28,9 @@ export function translateError(err: unknown, fallback = "Произошла ош
   if (msg.includes("password should be at least")) return "Пароль слишком короткий.";
   if (msg.includes("invalid email")) return "Некорректный email.";
   if (msg.includes("rate limit") || msg.includes("too many")) return "Слишком много попыток. Подождите немного.";
+  if (msg.includes("текущий пароль")) return "Текущий пароль неверный.";
+  if (msg.includes("введите текущий пароль")) return "Введите текущий пароль.";
+  if (msg.includes("этот id уже занят")) return "Этот ID уже занят.";
   if (msg.includes("jwt") || msg.includes("not authenticated") || msg.includes("unauthorized")) {
     return "Сессия истекла. Войдите снова.";
   }

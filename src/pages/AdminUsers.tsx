@@ -82,7 +82,7 @@ const AdminUsers = () => {
               </div>
               {r.username && (
                 <Button asChild size="sm" variant="outline">
-                  <Link to={`/messages?to=${r.username}`}><MessageSquare className="h-3 w-3" /></Link>
+                  <Link to={`/admin/chat?to=${r.username}`}><MessageSquare className="h-3 w-3" /></Link>
                 </Button>
               )}
               <Badge variant="secondary">{formatDate(r.created_at)}</Badge>

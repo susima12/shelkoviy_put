@@ -8,7 +8,6 @@ import {
   useParams as tUseParams,
   useSearch as tUseSearch,
 } from "@tanstack/react-router";
-import { cn } from "@/lib/utils";
 
 type LinkProps = {
   to: string;
@@ -48,18 +47,25 @@ export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(function NavL
   { to, className, end, children, ...rest },
   ref,
 ) {
+  const inactiveCls =
+    typeof className === "function"
+      ? className({ isActive: false, isPending: false })
+      : className;
+  const activeCls =
+    typeof className === "function"
+      ? className({ isActive: true, isPending: false })
+      : className;
+
   return (
     <TLink
       ref={ref as any}
       to={to as any}
       activeOptions={{ exact: !!end }}
+      inactiveProps={{ className: inactiveCls }}
+      activeProps={{ className: activeCls }}
       {...(rest as any)}
     >
-      {(state: any) => {
-        const isActive = !!state?.isActive;
-        const cls = typeof className === "function" ? className({ isActive, isPending: false }) : className;
-        return <span className={cn(cls)}>{typeof children === "function" ? (children as any)({ isActive, isPending: false, isTransitioning: false }) : children}</span>;
-      }}
+      {children}
     </TLink>
   );
 });

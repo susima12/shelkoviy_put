@@ -99,7 +99,6 @@ create table public.jury_members (
 alter table public.jury_members enable row level security;
 create policy "jury readable" on public.jury_members for select using (true);
 
--- ============= LEGACY COMPETITION CHAT =============
 create table public.chat_messages (
   id uuid primary key default gen_random_uuid(),
   competition_id uuid not null references public.competitions(id) on delete cascade,
@@ -134,7 +133,6 @@ create policy "members read members" on public.chat_members for select using (pu
 create policy "admin updates members" on public.chat_members for update using (public.is_admin_of(auth.uid(), competition_id));
 create policy "admin deletes members" on public.chat_members for delete using (public.is_admin_of(auth.uid(), competition_id));
 
--- ============= DIRECT MESSENGER =============
 create table public.dm_conversations (
   id uuid primary key default gen_random_uuid(),
   user_a uuid not null references auth.users(id) on delete cascade,
@@ -146,7 +144,6 @@ create table public.dm_conversations (
 );
 alter table public.dm_conversations enable row level security;
 
--- Permissive: any authenticated user can DM any other authenticated user
 create or replace function public.can_dm(_from uuid, _to uuid)
 returns boolean language sql stable security definer set search_path = public as $$
   select _from is not null and _to is not null and _from <> _to

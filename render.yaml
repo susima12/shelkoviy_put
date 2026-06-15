@@ -1,4 +1,3 @@
-# Render Blueprint — фронтенд + SSR + API + SQLite
 services:
   - type: web
     name: shelk-put

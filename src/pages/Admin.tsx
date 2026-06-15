@@ -9,6 +9,7 @@ import { Download, LogOut, ShieldAlert, Check, X, Clock, MessageCircle } from "l
 import { Link } from "@/lib/router-compat";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
@@ -134,19 +135,19 @@ const Admin = () => {
     return (
       <>
         <PageHero eyebrow="Админ-панель" title="Вход для администраторов" description="У каждого конкурса свой администратор и своя панель." />
-        <section className="py-16">
-          <div className="container grid lg:grid-cols-2 gap-8 max-w-5xl">
-            <Card className="p-8">
+        <section className="relative z-10 py-16">
+          <div className="container grid gap-8 max-w-5xl lg:grid-cols-2">
+            <Card className="relative z-10 p-6 sm:p-8">
               <form onSubmit={adminLogin} className="space-y-4">
                 <div>
                   <Label>Email администратора</Label>
-                  <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin_horeograph@festival.local" />
+                  <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin_horeograph@festival.local" className="h-11" autoComplete="username" />
                 </div>
                 <div>
                   <Label>Пароль</Label>
-                  <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" autoComplete="current-password" />
                 </div>
-                <Button type="submit" variant="wine" className="w-full" disabled={busy}>
+                <Button type="submit" variant="wine" className="w-full min-h-11" disabled={busy}>
                   {busy ? "Входим..." : "Войти в панель"}
                 </Button>
               </form>
@@ -197,7 +198,7 @@ const Admin = () => {
         title={`Заявки · ${competition?.name ?? ""}`}
         description="Только заявки вашего конкурса."
       />
-      <section className="py-16">
+      <section className="relative z-10 py-12 sm:py-16">
         <div className="container">
           <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
             <p className="text-muted-foreground">
@@ -245,22 +246,25 @@ const Admin = () => {
                         Подана: {format(new Date(a.created_at), "dd.MM.yyyy HH:mm")}
                       </div>
                     </div>
-                    <div className="flex flex-col gap-2 min-w-[220px]">
+                    <div className="flex flex-col gap-2 w-full md:min-w-[220px] md:w-auto">
                       <Badge variant="outline" className="self-start">
                         {a.status === "new" && "Новая"}
                         {a.status === "reviewing" && "На рассмотрении"}
                         {a.status === "approved" && "✓ Одобрена"}
                         {a.status === "rejected" && "✕ Отклонена"}
                       </Badge>
-                      <div className="grid grid-cols-3 gap-1">
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(a.id, "reviewing")}>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <Button size="sm" variant="outline" className="min-h-10" onClick={() => updateStatus(a.id, "reviewing")}>
                           <Clock className="h-3 w-3" />
+                          <span className="sr-only sm:not-sr-only sm:ml-1">Рассмотр.</span>
                         </Button>
-                        <Button size="sm" variant="festival" onClick={() => updateStatus(a.id, "approved")}>
-                          <Check className="h-3 w-3" /> Одобрить
+                        <Button size="sm" variant="festival" className="min-h-10" onClick={() => updateStatus(a.id, "approved")}>
+                          <Check className="h-3 w-3" />
+                          <span className="ml-1">Одобрить</span>
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(a.id, "rejected")}>
+                        <Button size="sm" variant="outline" className="min-h-10 col-span-2 sm:col-span-1" onClick={() => updateStatus(a.id, "rejected")}>
                           <X className="h-3 w-3" />
+                          <span className="sr-only sm:not-sr-only sm:ml-1">Отклонить</span>
                         </Button>
                       </div>
                       {a.status === "approved" && (

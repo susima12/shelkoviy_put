@@ -1,5 +1,3 @@
-
--- ============= BASE FESTIVAL SCHEMA =============
 create type public.app_role as enum ('admin', 'user');
 create type public.application_status as enum ('new','reviewing','approved','rejected');
 
@@ -30,7 +28,6 @@ create table public.profiles (
   updated_at timestamptz not null default now()
 );
 alter table public.profiles enable row level security;
--- Profiles are public-readable so users can search each other in the messenger
 create policy "profiles readable by authenticated" on public.profiles for select to authenticated using (true);
 create policy "own profile insert" on public.profiles for insert with check (auth.uid() = user_id);
 create policy "own profile update" on public.profiles for update using (auth.uid() = user_id);
@@ -121,7 +118,6 @@ create table public.jury_members (
 alter table public.jury_members enable row level security;
 create policy "jury readable" on public.jury_members for select using (true);
 
--- ============= LEGACY COMPETITION CHAT (kept for compat) =============
 create table public.chat_messages (
   id uuid primary key default gen_random_uuid(),
   competition_id uuid not null references public.competitions(id) on delete cascade,
@@ -165,7 +161,6 @@ create policy "members read members" on public.chat_members for select
 create policy "admin updates members" on public.chat_members for update using (public.is_admin_of(auth.uid(), competition_id));
 create policy "admin deletes members" on public.chat_members for delete using (public.is_admin_of(auth.uid(), competition_id));
 
--- ============= DIRECT MESSENGER (Telegram-style 1-on-1) =============
 create table public.dm_conversations (
   id uuid primary key default gen_random_uuid(),
   user_a uuid not null references auth.users(id) on delete cascade,
@@ -184,7 +179,6 @@ $$;
 
 create or replace function public.can_dm(_from uuid, _to uuid)
 returns boolean language sql stable security definer set search_path = public as $$
-  -- Anyone authenticated can read & search; admins can DM anyone; otherwise recipient must have an approved application
   select _from is not null and _to is not null and _from <> _to and (
     public.has_role(_from, 'admin'::public.app_role)
     or public.has_role(_to, 'admin'::public.app_role)
@@ -228,7 +222,6 @@ create policy "dm sender edits" on public.dm_messages for update
   using (auth.uid() = sender_id or public.is_dm_participant(auth.uid(), conversation_id));
 create policy "dm sender deletes" on public.dm_messages for delete using (auth.uid() = sender_id);
 
--- Update last_message_at automatically
 create or replace function public.bump_conversation()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
@@ -238,14 +231,12 @@ end; $$;
 create trigger dm_messages_bump after insert on public.dm_messages
   for each row execute function public.bump_conversation();
 
--- Realtime
 alter publication supabase_realtime add table public.chat_messages;
 alter publication supabase_realtime add table public.chat_members;
 alter publication supabase_realtime add table public.applications;
 alter publication supabase_realtime add table public.dm_messages;
 alter publication supabase_realtime add table public.dm_conversations;
 
--- ============= STORAGE BUCKETS =============
 insert into storage.buckets (id, name, public) values ('applications', 'applications', false) on conflict (id) do nothing;
 insert into storage.buckets (id, name, public) values ('avatars', 'avatars', true) on conflict (id) do nothing;
 
@@ -257,7 +248,6 @@ create policy "avatars own upload" on storage.objects for insert with check (buc
 create policy "avatars own update" on storage.objects for update using (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
 create policy "avatars own delete" on storage.objects for delete using (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
 
--- ============= NEW USER TRIGGER =============
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare base_username text;
@@ -266,7 +256,6 @@ begin
   if base_username is null or length(base_username) < 3 then
     base_username := 'user_' || substr(new.id::text, 1, 8);
   end if;
-  -- Ensure uniqueness by appending suffix if needed
   while exists (select 1 from public.profiles where username = base_username) loop
     base_username := base_username || substr(md5(random()::text), 1, 4);
   end loop;
@@ -279,7 +268,6 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- ============= SEED COMPETITIONS =============
 insert into public.competitions (slug, name, short_description, display_order, age_categories, nominations) values
   ('vokal','Вокал','Сольное и ансамблевое вокальное исполнение',1,
     ARRAY['до 6 лет','7–9 лет','10–12 лет','13–15 лет','16–18 лет','19–25 лет','смешанная'],

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getDb, getUserAdminRole } from "@/server/db";
-import { createToken, getTokenFromRequest, jsonResponse, verifyToken } from "@/server/auth";
+import { getTokenFromRequest, jsonResponse, verifyToken } from "@/server/auth";
 
 export const Route = createFileRoute("/api/auth/session")({
   server: {
@@ -28,8 +28,7 @@ export const Route = createFileRoute("/api/auth/session")({
           admin_competition_id: adminRole?.competition_id ?? null,
         };
 
-        const newToken = await createToken(user);
-        return jsonResponse({ user, token: newToken });
+        return jsonResponse({ user });
       },
     },
   },

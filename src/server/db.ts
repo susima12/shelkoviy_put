@@ -7,6 +7,31 @@ import { FESTIVAL_COMPETITIONS } from "@/lib/competitions-data";
 import { ADMIN_PASSWORDS } from "@/lib/admin-credentials";
 import { JURY_SEED } from "@/server/jury-seed";
 
+/**
+ * =============================================================================
+ * SQLite-база фестиваля «Шёлковый путь» — соответствие ER-диаграмме диплома
+ * =============================================================================
+ * Файл БД на диске: data/festival.db (переменная окружения DATABASE_PATH)
+ *
+ * ER «Роли»                    → таблица user_roles (поле role: 'admin' | …)
+ * ER «Пользователь»            → таблица users (+ расширение profiles)
+ * ER «Конкурсы»                → таблица competitions
+ * ER «Номинации»               → competitions.nominations (JSON-массив в строке)
+ * ER «Возрастные категории»    → competitions.age_categories (JSON-массив)
+ * ER «Заявки»                  → таблица applications
+ * ER «Статус заявки»           → поле applications.status ('new'|'approved'|…)
+ * ER «Жюри»                    → таблица jury_members
+ * ER «Новости»                 → таблица news
+ * ER «Комментарии к заявкам»   → пока не реализовано (можно добавить позже)
+ * ER «Уведомления»             → пока не реализовано (уведомления через UI/toast)
+ * ER «Документы»               → статические страницы /payment, /about (не в БД)
+ *
+ * Где на сайте используется каждая сущность — см. комментарии у CREATE TABLE ниже.
+ * API-обработчики: src/routes/api/*.ts
+ * Страницы: src/pages/*.tsx и src/routes/*.tsx
+ * =============================================================================
+ */
+
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const defaultDbPath = join(rootDir, "data", "festival.db");
 const dbPath = process.env.DATABASE_PATH || defaultDbPath;
@@ -14,6 +39,7 @@ const dbPath = process.env.DATABASE_PATH || defaultDbPath;
 let _db: Database.Database | null = null;
 
 const SCHEMA = `
+-- ER: Пользователь. Страницы: /auth, /profile. API: /api/auth/*, /api/profiles/me
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   email TEXT UNIQUE NOT NULL COLLATE NOCASE,
@@ -22,6 +48,7 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Профиль участника (имя, ID для сообщений, аватар). Страница: /profile
 CREATE TABLE IF NOT EXISTS profiles (
   user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   username TEXT UNIQUE,
@@ -32,6 +59,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- ER: Роли. Админ видит /admin, участник — /profile. API: getUserAdminRole()
 CREATE TABLE IF NOT EXISTS user_roles (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -39,6 +67,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
   competition_id TEXT REFERENCES competitions(id) ON DELETE SET NULL
 );
 
+-- ER: Конкурсы (+ номинации и возрастные категории в JSON). Страницы: /competitions, /apply
 CREATE TABLE IF NOT EXISTS competitions (
   id TEXT PRIMARY KEY,
   slug TEXT UNIQUE NOT NULL,
@@ -51,6 +80,7 @@ CREATE TABLE IF NOT EXISTS competitions (
   nominations TEXT NOT NULL DEFAULT '[]'
 );
 
+-- ER: Заявки (+ статус в поле status). Страницы: /apply, /my-applications, /admin
 CREATE TABLE IF NOT EXISTS applications (
   id TEXT PRIMARY KEY,
   user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
@@ -75,6 +105,7 @@ CREATE TABLE IF NOT EXISTS applications (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- ER: Жюри. Страница: /jury. API: /api/jury
 CREATE TABLE IF NOT EXISTS jury_members (
   id TEXT PRIMARY KEY,
   full_name TEXT NOT NULL,
@@ -86,6 +117,7 @@ CREATE TABLE IF NOT EXISTS jury_members (
   display_order INTEGER NOT NULL DEFAULT 0
 );
 
+-- ER: Новости. Страница: /news. API: /api/news
 CREATE TABLE IF NOT EXISTS news (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -94,11 +126,15 @@ CREATE TABLE IF NOT EXISTS news (
   published_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Чат конкурса (доп. к диаграмме). Страница: /chat/$slug. API: /api/chat/$slug
 CREATE TABLE IF NOT EXISTS chat_messages (
   id TEXT PRIMARY KEY,
   competition_id TEXT NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
+  attachment_url TEXT,
+  attachment_name TEXT,
+  attachment_mime TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -110,6 +146,7 @@ CREATE TABLE IF NOT EXISTS chat_members (
   UNIQUE(competition_id, user_id)
 );
 
+-- Личные сообщения между пользователями. Страницы: /messages, /admin/chat
 CREATE TABLE IF NOT EXISTS dm_conversations (
   id TEXT PRIMARY KEY,
   user_a TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -123,6 +160,9 @@ CREATE TABLE IF NOT EXISTS dm_messages (
   conversation_id TEXT NOT NULL REFERENCES dm_conversations(id) ON DELETE CASCADE,
   sender_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
+  attachment_url TEXT,
+  attachment_name TEXT,
+  attachment_mime TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   edited_at TEXT,
   deleted_at TEXT,
@@ -130,9 +170,19 @@ CREATE TABLE IF NOT EXISTS dm_messages (
   reply_to TEXT
 );
 
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_applications_user ON applications(user_id);
 CREATE INDEX IF NOT EXISTS idx_applications_comp ON applications(competition_id);
 CREATE INDEX IF NOT EXISTS idx_user_roles_user ON user_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_reset_tokens_hash ON password_reset_tokens(token_hash);
 `;
 
 function seedCompetitions(db: Database.Database) {
@@ -188,9 +238,9 @@ export function ensureAdminAccounts(db: Database.Database) {
     const email = `admin_${c.slug}@festival.local`;
     const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(email) as { id: string } | undefined;
     let userId = existing?.id;
-    const pwHash = bcrypt.hashSync(password, 10);
 
     if (!userId) {
+      const pwHash = bcrypt.hashSync(password, 10);
       userId = crypto.randomUUID();
       db.prepare(
         "INSERT INTO users (id, email, password_hash, display_name) VALUES (?, ?, ?, ?)"
@@ -198,8 +248,6 @@ export function ensureAdminAccounts(db: Database.Database) {
       db.prepare(
         "INSERT INTO profiles (user_id, email, display_name, username) VALUES (?, ?, ?, ?)"
       ).run(userId, email, `Admin · ${c.name}`, `admin_${c.slug}`);
-    } else {
-      db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(pwHash, userId);
     }
 
     const role = db
@@ -223,6 +271,20 @@ export async function seedAdmins(db: Database.Database) {
   return ensureAdminAccounts(db);
 }
 
+function migrateChatAttachments(db: Database.Database) {
+  const addCol = (table: string, col: string, type: string) => {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    if (!cols.some((c) => c.name === col)) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${type}`);
+    }
+  };
+  for (const table of ["dm_messages", "chat_messages"]) {
+    addCol(table, "attachment_url", "TEXT");
+    addCol(table, "attachment_name", "TEXT");
+    addCol(table, "attachment_mime", "TEXT");
+  }
+}
+
 export function getDb(): Database.Database {
   if (_db) return _db;
 
@@ -233,6 +295,7 @@ export function getDb(): Database.Database {
   _db.pragma("journal_mode = WAL");
   _db.pragma("foreign_keys = ON");
   _db.exec(SCHEMA);
+  migrateChatAttachments(_db);
   seedCompetitions(_db);
   seedJury(_db);
   ensureAdminAccounts(_db);

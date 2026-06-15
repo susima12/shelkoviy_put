@@ -10,11 +10,16 @@ export const Route = createFileRoute("/api/profiles/me")({
         if (!user) return errorResponse("Unauthorized", 401);
 
         const db = getDb();
-        const profile = db
+        const row = db
           .prepare("SELECT * FROM profiles WHERE user_id = ?")
-          .get(user.id);
+          .get(user.id) as Record<string, unknown> | null;
 
-        return jsonResponse({ profile: profile ?? null });
+        if (row?.avatar_url && String(row.avatar_url).startsWith("/uploads/avatars/")) {
+          const v = String(row.avatar_url).includes("?") ? String(row.avatar_url).split("?")[1] : "";
+          row.avatar_url = `/api/profiles/avatar/${user.id}${v ? `?${v}` : ""}`;
+        }
+
+        return jsonResponse({ profile: row ?? null });
       },
 
       PATCH: async ({ request }) => {
@@ -32,6 +37,9 @@ export const Route = createFileRoute("/api/profiles/me")({
 
         if (body.username) {
           const normalized = body.username.trim().toLowerCase();
+          if (!/^[a-z0-9_]{3,30}$/.test(normalized)) {
+            return errorResponse("ID: a-z, 0-9, _, 3–30 символов");
+          }
           const clash = db
             .prepare("SELECT user_id FROM profiles WHERE username = ? AND user_id != ?")
             .get(normalized, user.id);
@@ -40,36 +48,58 @@ export const Route = createFileRoute("/api/profiles/me")({
 
         const existing = db.prepare("SELECT * FROM profiles WHERE user_id = ?").get(user.id) as Record<string, unknown> | undefined;
 
+        if (body.display_name !== undefined) {
+          const name = body.display_name.trim();
+          if (name.length < 2 || name.length > 80) {
+            return errorResponse("Имя: от 2 до 80 символов");
+          }
+        }
+
+        const displayName =
+          body.display_name !== undefined ? body.display_name.trim() : undefined;
+        const username =
+          body.username !== undefined ? body.username.trim().toLowerCase() || null : undefined;
+        const bio = body.bio !== undefined ? body.bio.trim() || null : undefined;
+        const avatarUrl = body.avatar_url !== undefined ? body.avatar_url || null : undefined;
+
         if (!existing) {
           db.prepare(
             "INSERT INTO profiles (user_id, email, display_name, username, bio, avatar_url) VALUES (?, ?, ?, ?, ?, ?)"
           ).run(
             user.id,
             user.email,
-            body.display_name ?? user.display_name ?? user.email,
-            body.username ?? user.email.split("@")[0],
-            body.bio ?? null,
-            body.avatar_url ?? null
+            displayName ?? user.display_name ?? user.email,
+            username ?? null,
+            bio ?? null,
+            avatarUrl ?? null
           );
         } else {
-          db.prepare(`
-            UPDATE profiles SET
-              display_name = COALESCE(?, display_name),
-              username = COALESCE(?, username),
-              bio = COALESCE(?, bio),
-              avatar_url = COALESCE(?, avatar_url)
-            WHERE user_id = ?
-          `).run(
-            body.display_name ?? null,
-            body.username ? body.username.trim().toLowerCase() : null,
-            body.bio !== undefined ? body.bio : null,
-            body.avatar_url ?? null,
-            user.id
-          );
+          const sets: string[] = [];
+          const vals: unknown[] = [];
+          if (displayName !== undefined) {
+            sets.push("display_name = ?");
+            vals.push(displayName);
+          }
+          if (username !== undefined) {
+            sets.push("username = ?");
+            vals.push(username);
+          }
+          if (bio !== undefined) {
+            sets.push("bio = ?");
+            vals.push(bio);
+          }
+          if (avatarUrl !== undefined) {
+            sets.push("avatar_url = ?");
+            vals.push(avatarUrl);
+          }
+          if (sets.length) {
+            vals.push(user.id);
+            db.prepare(`UPDATE profiles SET ${sets.join(", ")} WHERE user_id = ?`).run(...vals);
+          }
         }
 
-        if (body.display_name) {
-          db.prepare("UPDATE users SET display_name = ? WHERE id = ?").run(body.display_name, user.id);
+        if (displayName) {
+          db.prepare("UPDATE users SET display_name = ? WHERE id = ?").run(displayName, user.id);
         }
 
         const profile = db.prepare("SELECT * FROM profiles WHERE user_id = ?").get(user.id);

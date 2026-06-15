@@ -1,4 +1,7 @@
 const TOKEN_KEY = "shelk_put_token";
+const SESSION_CACHE_MS = 60_000;
+let sessionCache: { user: ApiUser | null; at: number } | null = null;
+let sessionPromise: Promise<ApiUser | null> | null = null;
 
 export type ApiUser = {
   id: string;
@@ -30,6 +33,7 @@ export function setToken(token: string | null) {
   if (typeof window === "undefined") return;
   if (token) localStorage.setItem(TOKEN_KEY, token);
   else localStorage.removeItem(TOKEN_KEY);
+  sessionCache = null;
 }
 
 export async function apiFetch<T = unknown>(
@@ -81,6 +85,9 @@ export const api = {
 
   signOut: () => apiFetch("/api/auth/signout", { method: "POST", auth: false }),
 
+  resetPasswordEnabled: () =>
+    apiFetch<{ enabled: boolean }>("/api/auth/reset-password", { auth: false }),
+
   resetPassword: (email: string) =>
     apiFetch("/api/auth/reset-password", {
       method: "POST",
@@ -88,14 +95,21 @@ export const api = {
       auth: false,
     }),
 
+  confirmResetPassword: (token: string, password: string) =>
+    apiFetch<{ ok: boolean; message?: string }>("/api/auth/reset-password/confirm", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+      auth: false,
+    }),
+
   changePassword: (current_password: string, new_password: string) =>
-    apiFetch("/api/auth/change-password", {
+    apiFetch<{ ok: boolean; token?: string }>("/api/auth/change-password", {
       method: "POST",
       body: JSON.stringify({ current_password, new_password }),
     }),
 
   changeEmail: (current_password: string, new_email: string) =>
-    apiFetch("/api/auth/change-email", {
+    apiFetch<{ ok: boolean; email: string; user: ApiUser; token?: string }>("/api/auth/change-email", {
       method: "POST",
       body: JSON.stringify({ current_password, new_email }),
     }),
@@ -116,6 +130,12 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  uploadAvatar: (image: string) =>
+    apiFetch<{ profile: ProfileRow; avatar_url: string }>("/api/profiles/avatar", {
+      method: "POST",
+      body: JSON.stringify({ image }),
+    }),
+
   submitApplication: (data: Record<string, unknown>) =>
     apiFetch("/api/applications", { method: "POST", body: JSON.stringify(data) }),
 
@@ -134,8 +154,10 @@ export const api = {
 
   getChat: (slug: string) => apiFetch<ChatState>(`/api/chat/${slug}`),
 
-  sendChatMessage: (slug: string, content: string) =>
-    apiFetch(`/api/chat/${slug}`, { method: "POST", body: JSON.stringify({ content }) }),
+  sendChatMessage: (
+    slug: string,
+    payload: { content?: string; attachment?: ChatAttachmentPayload }
+  ) => apiFetch(`/api/chat/${slug}`, { method: "POST", body: JSON.stringify(payload) }),
 
   inviteToChat: (slug: string, user_id: string) =>
     apiFetch(`/api/chat/${slug}`, { method: "POST", body: JSON.stringify({ action: "invite", user_id }) }),
@@ -145,19 +167,22 @@ export const api = {
   getMessages: (conversationId: string) =>
     apiFetch<{ messages: DmMessage[]; profiles: Record<string, ProfileRow> }>(`/api/messages/${conversationId}`),
 
-  sendDm: (conversationId: string, content: string, reply_to?: string) =>
+  sendDm: (
+    conversationId: string,
+    payload: { content?: string; reply_to?: string; attachment?: ChatAttachmentPayload }
+  ) =>
     apiFetch(`/api/messages/${conversationId}`, {
       method: "POST",
-      body: JSON.stringify({ content, reply_to }),
+      body: JSON.stringify(payload),
     }),
 
   searchProfiles: (q: string) =>
     apiFetch<{ profiles: ProfileRow[] }>(`/api/messages/search?q=${encodeURIComponent(q)}`),
 
-  startConversation: (username: string) =>
+  startConversation: (target: { username?: string; user_id?: string }) =>
     apiFetch<{ conversation_id: string }>("/api/messages/conversations", {
       method: "POST",
-      body: JSON.stringify({ username }),
+      body: JSON.stringify(target),
     }),
 };
 
@@ -223,9 +248,31 @@ export type NewsRow = {
   published_at: string;
 };
 
+export type ChatAttachmentPayload = {
+  data: string;
+  name: string;
+  mime: string;
+};
+
+export function chatFileUrl(url: string): string {
+  const token = getToken();
+  if (!token) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}token=${encodeURIComponent(token)}`;
+}
+
 export type ChatState = {
   competition: CompetitionRow | null;
-  messages: { id: string; content: string; created_at: string; user_id: string; author_name: string }[];
+  messages: {
+    id: string;
+    content: string;
+    created_at: string;
+    user_id: string;
+    author_name: string;
+    attachment_url?: string | null;
+    attachment_name?: string | null;
+    attachment_mime?: string | null;
+  }[];
   is_admin: boolean;
   allowed: boolean;
   approved: { user_id: string; display_name: string; email: string }[];
@@ -250,6 +297,9 @@ export type DmMessage = {
   deleted_at?: string | null;
   pinned_at?: string | null;
   reply_to?: string | null;
+  attachment_url?: string | null;
+  attachment_name?: string | null;
+  attachment_mime?: string | null;
 };
 
 // Auth event bus for header/profile updates
@@ -265,25 +315,47 @@ export function notifyAuthChange(user: ApiUser | null) {
   listeners.forEach((fn) => fn(user));
 }
 
-export async function restoreSession(): Promise<ApiUser | null> {
+export async function restoreSession(force = false): Promise<ApiUser | null> {
   const token = getToken();
   if (!token) {
+    sessionCache = { user: null, at: Date.now() };
     notifyAuthChange(null);
     return null;
   }
-  try {
-    const { user, token: newToken } = await api.getSession();
-    if (!user) {
+
+  if (!force && sessionCache && Date.now() - sessionCache.at < SESSION_CACHE_MS) {
+    return sessionCache.user;
+  }
+
+  if (!force && sessionPromise) return sessionPromise;
+
+  sessionPromise = (async () => {
+    try {
+      const { user, token: newToken } = await api.getSession();
+      if (!user) {
+        setToken(null);
+        sessionCache = { user: null, at: Date.now() };
+        notifyAuthChange(null);
+        return null;
+      }
+      if (newToken) setToken(newToken);
+      sessionCache = { user, at: Date.now() };
+      notifyAuthChange(user);
+      return user;
+    } catch {
       setToken(null);
+      sessionCache = { user: null, at: Date.now() };
       notifyAuthChange(null);
       return null;
+    } finally {
+      sessionPromise = null;
     }
-    if (newToken) setToken(newToken);
-    notifyAuthChange(user);
-    return user;
-  } catch {
-    setToken(null);
-    notifyAuthChange(null);
-    return null;
-  }
+  })();
+
+  return sessionPromise;
+}
+
+export function invalidateSessionCache() {
+  sessionCache = null;
+  sessionPromise = null;
 }

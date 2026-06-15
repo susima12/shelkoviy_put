@@ -1,6 +1,4 @@
-﻿
--- ============= BASE FESTIVAL SCHEMA =============
-create type public.app_role as enum ('admin', 'user');
+﻿create type public.app_role as enum ('admin', 'user');
 create type public.application_status as enum ('new','reviewing','approved','rejected');
 
 create table public.competitions (

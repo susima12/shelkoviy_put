@@ -4,14 +4,15 @@ import { api, type DmConversation, type DmMessage, type ProfileRow } from "@/lib
 import { useAuthReady } from "@/hooks/use-auth-ready";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
 import { cn } from "@/lib/utils";
 import { BackButton } from "@/components/ui/back-button";
+import { ChatComposer } from "@/components/chat/ChatComposer";
+import { ChatMessageBody } from "@/components/chat/ChatMessageBody";
 
 const Messages = ({ embedded = false }: { embedded?: boolean }) => {
   const nav = useNavigate();
@@ -21,9 +22,10 @@ const Messages = ({ embedded = false }: { embedded?: boolean }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<DmMessage[]>([]);
   const [profilesMap, setProfilesMap] = useState<Record<string, ProfileRow>>({});
-  const [text, setText] = useState("");
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<ProfileRow[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchWrapRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const loadConvs = async () => {
@@ -47,7 +49,7 @@ const Messages = ({ embedded = false }: { embedded?: boolean }) => {
   useEffect(() => {
     const to = params.get("to");
     if (!user || !to) return;
-    api.startConversation(to).then(({ conversation_id }) => {
+    api.startConversation({ username: to }).then(({ conversation_id }) => {
       setActiveId(conversation_id);
       loadConvs();
     }).catch(() => {});
@@ -61,17 +63,30 @@ const Messages = ({ embedded = false }: { embedded?: boolean }) => {
   }, [activeId]);
 
   useEffect(() => {
-    if (!search.trim() || !user) { setSearchResults([]); return; }
+    if (!user || !searchOpen) return;
+    const q = search.trim();
     const t = setTimeout(() => {
-      api.searchProfiles(search.trim()).then(({ profiles }) => setSearchResults(profiles ?? [])).catch(() => setSearchResults([]));
-    }, 250);
+      api.searchProfiles(q).then(({ profiles }) => setSearchResults(profiles ?? [])).catch(() => setSearchResults([]));
+    }, 150);
     return () => clearTimeout(t);
-  }, [search, user]);
+  }, [search, user, searchOpen]);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
   const openConversation = async (profile: ProfileRow) => {
-    if (!profile.username) return;
     try {
-      const { conversation_id } = await api.startConversation(profile.username);
+      const payload = profile.username
+        ? { username: profile.username }
+        : { user_id: profile.user_id };
+      const { conversation_id } = await api.startConversation(payload);
       setActiveId(conversation_id);
       await loadConvs();
       setSearch("");
@@ -81,15 +96,15 @@ const Messages = ({ embedded = false }: { embedded?: boolean }) => {
     }
   };
 
-  const send = async () => {
-    if (!text.trim() || !activeId) return;
+  const send = async (payload: { content?: string; attachment?: { data: string; name: string; mime: string } }) => {
+    if (!activeId) return;
     try {
-      await api.sendDm(activeId, text.trim());
-      setText("");
+      await api.sendDm(activeId, payload);
       await loadMessages(activeId);
       await loadConvs();
     } catch (e) {
       toast.error(translateError(e));
+      throw e;
     }
   };
 
@@ -102,25 +117,48 @@ const Messages = ({ embedded = false }: { embedded?: boolean }) => {
       <div className="grid md:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-180px)]">
         <Card className="flex flex-col overflow-hidden">
           <div className="p-3 border-b border-border">
-            <div className="relative">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="ID, @username, email" className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <div className="relative" ref={searchWrapRef}>
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10" />
+              <Input
+                placeholder="Поиск по имени, ID или email"
+                className="pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setSearchOpen(true)}
+                autoComplete="off"
+              />
+              {searchOpen && (
+                <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-md border border-border bg-background shadow-lg">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((u) => (
+                      <button
+                        key={u.user_id}
+                        type="button"
+                        onClick={() => openConversation(u)}
+                        className="w-full px-3 py-2 hover:bg-secondary flex items-center gap-3 text-left border-b border-border/40 last:border-0"
+                      >
+                        <Avatar className="h-9 w-9 shrink-0">
+                          <AvatarImage src={u.avatar_url ?? undefined} />
+                          <AvatarFallback>{(u.display_name || u.email || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm truncate font-medium">{u.display_name || "Без имени"}</div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {u.username ? `@${u.username}` : u.email}
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="px-3 py-4 text-sm text-muted-foreground text-center">
+                      {search.trim() ? "Никого не найдено" : "Нет других пользователей"}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {search && searchResults.length > 0 && (
-              <div className="border-b border-border bg-secondary/30">
-                {searchResults.map((u) => (
-                  <button key={u.user_id} onClick={() => openConversation(u)} className="w-full px-3 py-2 hover:bg-secondary flex items-center gap-3 text-left">
-                    <Avatar className="h-9 w-9"><AvatarImage src={u.avatar_url ?? undefined} /><AvatarFallback>{(u.display_name||u.email||"?").slice(0,2).toUpperCase()}</AvatarFallback></Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm truncate">{u.display_name || u.email}</div>
-                      <div className="text-xs text-muted-foreground truncate">@{u.username}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
             {convs.map((c) => (
               <button key={c.id} onClick={() => setActiveId(c.id)} className={cn("w-full px-3 py-3 flex items-center gap-3 text-left border-b border-border/40 hover:bg-secondary", activeId === c.id && "bg-secondary")}>
                 <Avatar className="h-10 w-10"><AvatarImage src={c.other?.avatar_url ?? undefined} /><AvatarFallback>{(c.other?.display_name||c.other?.email||"?").slice(0,2).toUpperCase()}</AvatarFallback></Avatar>
@@ -151,20 +189,12 @@ const Messages = ({ embedded = false }: { embedded?: boolean }) => {
                   const mine = m.sender_id === user?.id;
                   return (
                     <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-                      <div className={cn("max-w-[75%] rounded-2xl px-3 py-2", mine ? "bg-primary text-primary-foreground" : "bg-secondary")}>
-                        <div className="whitespace-pre-wrap break-words text-sm">{m.content}</div>
-                        <div className={cn("text-[10px] mt-1", mine ? "text-primary-foreground/70 text-right" : "text-muted-foreground")}>
-                          {format(new Date(m.created_at), "HH:mm")}
-                        </div>
-                      </div>
+                      <ChatMessageBody message={m} mine={mine} />
                     </div>
                   );
                 })}
               </div>
-              <div className="p-3 border-t border-border flex gap-2">
-                <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Сообщение..." onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} maxLength={4000} />
-                <Button onClick={send} variant="wine" disabled={!text.trim()}><Send className="h-4 w-4" /></Button>
-              </div>
+              <ChatComposer onSend={send} />
             </>
           )}
         </Card>

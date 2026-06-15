@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { CheckCircle2, LogIn, AlertCircle } from "lucide-react";
@@ -26,9 +26,11 @@ const baseSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(
-      /^(\+7|8)\d{10}$/,
-      "Телефон: +7 или 8 и 11 цифр (например +79991234567)"
+    .transform((v) => v.replace(/\D/g, ""))
+    .pipe(
+      z
+        .string()
+        .regex(/^[78]\d{10}$/, "Телефон: 11 цифр, начиная с +7 или 8")
     ),
   country: z.string().trim().max(80).optional(),
   city: z.string().trim().max(80).optional(),
@@ -50,7 +52,7 @@ const Apply = () => {
   const routeParams = useParams<{ slug?: string }>();
   const navigate = useNavigate();
   const { user, isReady } = useAuthReady();
-  const { items: competitions, loading: compsLoading, error: compsError } = useCompetitions({
+  const { items: competitions, error: compsError } = useCompetitions({
     acceptingOnly: true,
   });
   const [submitting, setSubmitting] = useState(false);
@@ -264,39 +266,32 @@ const Apply = () => {
         title="Подать заявку"
         description="Заполните форму согласно положению выбранного конкурса."
       />
-      <section className="py-16">
+      <section className="relative z-10 py-16">
         <div className="container max-w-3xl">
           {compsError && (
             <div className="mb-6 flex items-start gap-3 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">
               <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-              <div>Не удалось загрузить список конкурсов. Обновите страницу.</div>
+              <div>Не удалось обновить список конкурсов с сервера — показан локальный список.</div>
             </div>
           )}
 
-          <Card className="p-8 md:p-10">
+          <Card className="relative z-10 p-6 sm:p-8 md:p-10">
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
               <Section title={lockedToSlug && selectedComp ? `Конкурс: ${selectedComp.name}` : "Выбор конкурса"}>
                 {!lockedToSlug && (
                   <Field label="Конкурс *" error={form.formState.errors.competition_id?.message}>
-                    {compsLoading ? (
-                      <p className="text-sm text-muted-foreground">Загрузка конкурсов...</p>
-                    ) : (
-                      <Select
-                        value={competitionId || undefined}
-                        onValueChange={(v) => form.setValue("competition_id", v, { shouldValidate: true })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите конкурс" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-popover z-50 max-h-72">
-                          {competitions.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                    <NativeSelect
+                      value={competitionId}
+                      onChange={(e) => form.setValue("competition_id", e.target.value, { shouldValidate: true })}
+                      required
+                      placeholder="Выберите конкурс"
+                    >
+                      {competitions.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </NativeSelect>
                   </Field>
                 )}
 
@@ -307,30 +302,28 @@ const Apply = () => {
                     )}
                     <div className="grid sm:grid-cols-2 gap-4">
                       <Field label="Возрастная категория *" error={form.formState.errors.age_category?.message}>
-                        <Select
-                          value={form.watch("age_category") || undefined}
-                          onValueChange={(v) => form.setValue("age_category", v, { shouldValidate: true })}
+                        <NativeSelect
+                          value={form.watch("age_category") || ""}
+                          onChange={(e) => form.setValue("age_category", e.target.value, { shouldValidate: true })}
+                          required
+                          placeholder="Выберите"
                         >
-                          <SelectTrigger><SelectValue placeholder="Выберите" /></SelectTrigger>
-                          <SelectContent className="bg-popover z-50 max-h-60">
-                            {(selectedComp.age_categories ?? []).map((a) => (
-                              <SelectItem key={a} value={a}>{a}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          {(selectedComp.age_categories ?? []).map((a) => (
+                            <option key={a} value={a}>{a}</option>
+                          ))}
+                        </NativeSelect>
                       </Field>
                       <Field label="Номинация *" error={form.formState.errors.nomination?.message}>
-                        <Select
-                          value={form.watch("nomination") || undefined}
-                          onValueChange={(v) => form.setValue("nomination", v, { shouldValidate: true })}
+                        <NativeSelect
+                          value={form.watch("nomination") || ""}
+                          onChange={(e) => form.setValue("nomination", e.target.value, { shouldValidate: true })}
+                          required
+                          placeholder="Выберите"
                         >
-                          <SelectTrigger><SelectValue placeholder="Выберите" /></SelectTrigger>
-                          <SelectContent className="bg-popover z-50 max-h-60">
-                            {(selectedComp.nominations ?? []).map((n) => (
-                              <SelectItem key={n} value={n}>{n}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          {(selectedComp.nominations ?? []).map((n) => (
+                            <option key={n} value={n}>{n}</option>
+                          ))}
+                        </NativeSelect>
                       </Field>
                     </div>
                   </>
@@ -358,7 +351,7 @@ const Apply = () => {
                     <Input type="email" {...form.register("email")} />
                   </Field>
                   <Field label="Телефон *" error={form.formState.errors.phone?.message}>
-                    <Input {...form.register("phone")} placeholder="+79991234567" />
+                    <Input type="tel" inputMode="tel" autoComplete="tel" placeholder="+7 999 123-45-67" {...form.register("phone")} className="h-11" />
                   </Field>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
@@ -379,10 +372,11 @@ const Apply = () => {
               <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/40">
                 <Checkbox
                   id="consent"
+                  className="mt-1 h-5 w-5"
                   checked={form.watch("consent_given") as boolean}
                   onCheckedChange={(v) => form.setValue("consent_given", !!v as any, { shouldValidate: true })}
                 />
-                <Label htmlFor="consent" className="text-sm leading-snug cursor-pointer">
+                <Label htmlFor="consent" className="text-sm leading-snug cursor-pointer flex-1 py-1">
                   Я даю согласие на обработку персональных данных (152-ФЗ) и подтверждаю
                   достоверность сведений. Подача заявки означает согласие с условиями положения. *
                 </Label>
@@ -391,7 +385,7 @@ const Apply = () => {
                 <p className="text-sm text-destructive -mt-4">{form.formState.errors.consent_given.message as string}</p>
               )}
 
-              <Button type="submit" variant="festival" size="xl" className="w-full" disabled={submitting || compsLoading}>
+              <Button type="submit" variant="festival" size="xl" className="w-full min-h-12" disabled={submitting}>
                 {submitting ? "Отправка..." : "Отправить заявку"}
               </Button>
             </form>
@@ -432,20 +426,20 @@ const CompetitionFields = ({
             : extraFields[field.key] ?? "";
           return (
             <Field key={field.key} label={field.label} error={errors[storageKey]?.message}>
-              <Select
-                value={value || undefined}
-                onValueChange={(v) => {
+              <NativeSelect
+                value={value}
+                onChange={(e) => {
+                  const v = e.target.value;
                   if (isStandardStorage) form.setValue(storageKey, v as never, { shouldValidate: true });
                   else setExtraFields((prev) => ({ ...prev, [field.key]: v }));
                 }}
+                required={field.required}
+                placeholder="Выберите"
               >
-                <SelectTrigger><SelectValue placeholder="Выберите" /></SelectTrigger>
-                <SelectContent className="bg-popover z-50">
-                  {field.options.map((o) => (
-                    <SelectItem key={o} value={o}>{o}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {field.options.map((o) => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </NativeSelect>
             </Field>
           );
         }

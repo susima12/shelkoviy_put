@@ -31,15 +31,25 @@ export const Route = createFileRoute("/api/messages/conversations")({
         const user = await getUserFromRequest(request);
         if (!user) return errorResponse("Unauthorized", 401);
 
-        const { username } = await parseJsonBody<{ username: string }>(request);
+        const body = await parseJsonBody<{ username?: string; user_id?: string }>(request);
         const db = getDb();
-        const target = db
-          .prepare("SELECT user_id FROM profiles WHERE username = ? COLLATE NOCASE")
-          .get(username.trim().toLowerCase()) as { user_id: string } | undefined;
 
-        if (!target || target.user_id === user.id) return errorResponse("Пользователь не найден", 404);
+        let targetId: string | undefined;
+        if (body.user_id) {
+          targetId = body.user_id;
+        } else if (body.username?.trim()) {
+          const target = db
+            .prepare("SELECT user_id FROM profiles WHERE username = ? COLLATE NOCASE")
+            .get(body.username.trim().toLowerCase()) as { user_id: string } | undefined;
+          targetId = target?.user_id;
+        }
 
-        const [a, b] = user.id < target.user_id ? [user.id, target.user_id] : [target.user_id, user.id];
+        if (!targetId || targetId === user.id) return errorResponse("Пользователь не найден", 404);
+
+        const exists = db.prepare("SELECT id FROM users WHERE id = ?").get(targetId);
+        if (!exists) return errorResponse("Пользователь не найден", 404);
+
+        const [a, b] = user.id < targetId ? [user.id, targetId] : [targetId, user.id];
         let conv = db
           .prepare("SELECT id FROM dm_conversations WHERE user_a = ? AND user_b = ?")
           .get(a, b) as { id: string } | undefined;

@@ -5,12 +5,14 @@ import { useAuthReady } from "@/hooks/use-auth-ready";
 import { PageHero } from "@/components/ui/page-hero";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
-import { Send, UserPlus, Users, Check } from "lucide-react";
+import { Users, Check, UserPlus } from "lucide-react";
 import { format } from "date-fns";
+import { ChatComposer } from "@/components/chat/ChatComposer";
+import { ChatMessageBody } from "@/components/chat/ChatMessageBody";
+import type { ChatState } from "@/lib/api-client";
 
 const Chat = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -20,8 +22,7 @@ const Chat = () => {
   const [comp, setComp] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [allowed, setAllowed] = useState(false);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [text, setText] = useState("");
+  const [messages, setMessages] = useState<ChatState["messages"]>([]);
   const [showInvitePanel, setShowInvitePanel] = useState(false);
   const [approved, setApproved] = useState<any[]>([]);
   const [memberIds, setMemberIds] = useState<Set<string>>(new Set());
@@ -56,16 +57,14 @@ const Chat = () => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  const send = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const value = text.trim();
-    if (!value || !slug) return;
+  const send = async (payload: { content?: string; attachment?: { data: string; name: string; mime: string } }) => {
+    if (!slug) return;
     try {
-      await api.sendChatMessage(slug, value);
-      setText("");
+      await api.sendChatMessage(slug, payload);
       await loadChat();
     } catch (err) {
       toast.error(translateError(err));
+      throw err;
     }
   };
 
@@ -121,21 +120,18 @@ const Chat = () => {
                   const mine = m.user_id === user?.id;
                   return (
                     <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
-                        <div className="flex items-center gap-2 text-xs opacity-80 mb-0.5">
+                      <div>
+                        <div className={`flex items-center gap-2 text-xs opacity-80 mb-0.5 ${mine ? "justify-end" : ""}`}>
                           <span className="font-semibold">{m.author_name ?? "—"}</span>
                           <span>{format(new Date(m.created_at), "HH:mm")}</span>
                         </div>
-                        <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                        <ChatMessageBody message={m} mine={mine} showTimestamp={false} />
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <form onSubmit={send} className="border-t border-border p-3 flex gap-2">
-                <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Сообщение..." maxLength={2000} />
-                <Button type="submit" variant="wine" size="sm"><Send className="h-4 w-4" /></Button>
-              </form>
+              <ChatComposer onSend={send} placeholder="Сообщение..." maxLength={2000} />
             </Card>
 
             {isAdmin && showInvitePanel && (

@@ -39,6 +39,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin_.users'
 import { Route as AdminChatRouteImport } from './routes/admin_.chat'
 import { Route as ApiPublicSetupAdminsRouteImport } from './routes/api/public/setup-admins'
 import { Route as ApiProfilesMeRouteImport } from './routes/api/profiles/me'
+import { Route as ApiProfilesAvatarRouteImport } from './routes/api/profiles/avatar'
 import { Route as ApiMessagesSearchRouteImport } from './routes/api/messages/search'
 import { Route as ApiMessagesConversationsRouteImport } from './routes/api/messages/conversations'
 import { Route as ApiMessagesConversationIdRouteImport } from './routes/api/messages/$conversationId'
@@ -53,6 +54,9 @@ import { Route as ApiAuthChangeEmailRouteImport } from './routes/api/auth/change
 import { Route as ApiApplicationsIdRouteImport } from './routes/api/applications.$id'
 import { Route as ApiAdminUsersRouteImport } from './routes/api/admin/users'
 import { Route as ApiAdminDashboardRouteImport } from './routes/api/admin/dashboard'
+import { Route as ApiProfilesAvatarUserIdRouteImport } from './routes/api/profiles/avatar.$userId'
+import { Route as ApiFilesChatMessageIdRouteImport } from './routes/api/files/chat.$messageId'
+import { Route as ApiAuthResetPasswordConfirmRouteImport } from './routes/api/auth/reset-password.confirm'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -204,6 +208,11 @@ const ApiProfilesMeRoute = ApiProfilesMeRouteImport.update({
   path: '/api/profiles/me',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiProfilesAvatarRoute = ApiProfilesAvatarRouteImport.update({
+  id: '/api/profiles/avatar',
+  path: '/api/profiles/avatar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiMessagesSearchRoute = ApiMessagesSearchRouteImport.update({
   id: '/api/messages/search',
   path: '/api/messages/search',
@@ -276,6 +285,22 @@ const ApiAdminDashboardRoute = ApiAdminDashboardRouteImport.update({
   path: '/api/admin/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiProfilesAvatarUserIdRoute = ApiProfilesAvatarUserIdRouteImport.update({
+  id: '/$userId',
+  path: '/$userId',
+  getParentRoute: () => ApiProfilesAvatarRoute,
+} as any)
+const ApiFilesChatMessageIdRoute = ApiFilesChatMessageIdRouteImport.update({
+  id: '/api/files/chat/$messageId',
+  path: '/api/files/chat/$messageId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthResetPasswordConfirmRoute =
+  ApiAuthResetPasswordConfirmRouteImport.update({
+    id: '/confirm',
+    path: '/confirm',
+    getParentRoute: () => ApiAuthResetPasswordRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -311,7 +336,7 @@ export interface FileRoutesByFullPath {
   '/api/applications/$id': typeof ApiApplicationsIdRoute
   '/api/auth/change-email': typeof ApiAuthChangeEmailRoute
   '/api/auth/change-password': typeof ApiAuthChangePasswordRoute
-  '/api/auth/reset-password': typeof ApiAuthResetPasswordRoute
+  '/api/auth/reset-password': typeof ApiAuthResetPasswordRouteWithChildren
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/signin': typeof ApiAuthSigninRoute
   '/api/auth/signout': typeof ApiAuthSignoutRoute
@@ -320,8 +345,12 @@ export interface FileRoutesByFullPath {
   '/api/messages/$conversationId': typeof ApiMessagesConversationIdRoute
   '/api/messages/conversations': typeof ApiMessagesConversationsRoute
   '/api/messages/search': typeof ApiMessagesSearchRoute
+  '/api/profiles/avatar': typeof ApiProfilesAvatarRouteWithChildren
   '/api/profiles/me': typeof ApiProfilesMeRoute
   '/api/public/setup-admins': typeof ApiPublicSetupAdminsRoute
+  '/api/auth/reset-password/confirm': typeof ApiAuthResetPasswordConfirmRoute
+  '/api/files/chat/$messageId': typeof ApiFilesChatMessageIdRoute
+  '/api/profiles/avatar/$userId': typeof ApiProfilesAvatarUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -356,7 +385,7 @@ export interface FileRoutesByTo {
   '/api/applications/$id': typeof ApiApplicationsIdRoute
   '/api/auth/change-email': typeof ApiAuthChangeEmailRoute
   '/api/auth/change-password': typeof ApiAuthChangePasswordRoute
-  '/api/auth/reset-password': typeof ApiAuthResetPasswordRoute
+  '/api/auth/reset-password': typeof ApiAuthResetPasswordRouteWithChildren
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/signin': typeof ApiAuthSigninRoute
   '/api/auth/signout': typeof ApiAuthSignoutRoute
@@ -365,8 +394,12 @@ export interface FileRoutesByTo {
   '/api/messages/$conversationId': typeof ApiMessagesConversationIdRoute
   '/api/messages/conversations': typeof ApiMessagesConversationsRoute
   '/api/messages/search': typeof ApiMessagesSearchRoute
+  '/api/profiles/avatar': typeof ApiProfilesAvatarRouteWithChildren
   '/api/profiles/me': typeof ApiProfilesMeRoute
   '/api/public/setup-admins': typeof ApiPublicSetupAdminsRoute
+  '/api/auth/reset-password/confirm': typeof ApiAuthResetPasswordConfirmRoute
+  '/api/files/chat/$messageId': typeof ApiFilesChatMessageIdRoute
+  '/api/profiles/avatar/$userId': typeof ApiProfilesAvatarUserIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -403,7 +436,7 @@ export interface FileRoutesById {
   '/api/applications/$id': typeof ApiApplicationsIdRoute
   '/api/auth/change-email': typeof ApiAuthChangeEmailRoute
   '/api/auth/change-password': typeof ApiAuthChangePasswordRoute
-  '/api/auth/reset-password': typeof ApiAuthResetPasswordRoute
+  '/api/auth/reset-password': typeof ApiAuthResetPasswordRouteWithChildren
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/signin': typeof ApiAuthSigninRoute
   '/api/auth/signout': typeof ApiAuthSignoutRoute
@@ -412,8 +445,12 @@ export interface FileRoutesById {
   '/api/messages/$conversationId': typeof ApiMessagesConversationIdRoute
   '/api/messages/conversations': typeof ApiMessagesConversationsRoute
   '/api/messages/search': typeof ApiMessagesSearchRoute
+  '/api/profiles/avatar': typeof ApiProfilesAvatarRouteWithChildren
   '/api/profiles/me': typeof ApiProfilesMeRoute
   '/api/public/setup-admins': typeof ApiPublicSetupAdminsRoute
+  '/api/auth/reset-password/confirm': typeof ApiAuthResetPasswordConfirmRoute
+  '/api/files/chat/$messageId': typeof ApiFilesChatMessageIdRoute
+  '/api/profiles/avatar/$userId': typeof ApiProfilesAvatarUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -460,8 +497,12 @@ export interface FileRouteTypes {
     | '/api/messages/$conversationId'
     | '/api/messages/conversations'
     | '/api/messages/search'
+    | '/api/profiles/avatar'
     | '/api/profiles/me'
     | '/api/public/setup-admins'
+    | '/api/auth/reset-password/confirm'
+    | '/api/files/chat/$messageId'
+    | '/api/profiles/avatar/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -505,8 +546,12 @@ export interface FileRouteTypes {
     | '/api/messages/$conversationId'
     | '/api/messages/conversations'
     | '/api/messages/search'
+    | '/api/profiles/avatar'
     | '/api/profiles/me'
     | '/api/public/setup-admins'
+    | '/api/auth/reset-password/confirm'
+    | '/api/files/chat/$messageId'
+    | '/api/profiles/avatar/$userId'
   id:
     | '__root__'
     | '/'
@@ -551,8 +596,12 @@ export interface FileRouteTypes {
     | '/api/messages/$conversationId'
     | '/api/messages/conversations'
     | '/api/messages/search'
+    | '/api/profiles/avatar'
     | '/api/profiles/me'
     | '/api/public/setup-admins'
+    | '/api/auth/reset-password/confirm'
+    | '/api/files/chat/$messageId'
+    | '/api/profiles/avatar/$userId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -585,7 +634,7 @@ export interface RootRouteChildren {
   ApiAdminUsersRoute: typeof ApiAdminUsersRoute
   ApiAuthChangeEmailRoute: typeof ApiAuthChangeEmailRoute
   ApiAuthChangePasswordRoute: typeof ApiAuthChangePasswordRoute
-  ApiAuthResetPasswordRoute: typeof ApiAuthResetPasswordRoute
+  ApiAuthResetPasswordRoute: typeof ApiAuthResetPasswordRouteWithChildren
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiAuthSigninRoute: typeof ApiAuthSigninRoute
   ApiAuthSignoutRoute: typeof ApiAuthSignoutRoute
@@ -594,8 +643,10 @@ export interface RootRouteChildren {
   ApiMessagesConversationIdRoute: typeof ApiMessagesConversationIdRoute
   ApiMessagesConversationsRoute: typeof ApiMessagesConversationsRoute
   ApiMessagesSearchRoute: typeof ApiMessagesSearchRoute
+  ApiProfilesAvatarRoute: typeof ApiProfilesAvatarRouteWithChildren
   ApiProfilesMeRoute: typeof ApiProfilesMeRoute
   ApiPublicSetupAdminsRoute: typeof ApiPublicSetupAdminsRoute
+  ApiFilesChatMessageIdRoute: typeof ApiFilesChatMessageIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -810,6 +861,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiProfilesMeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/profiles/avatar': {
+      id: '/api/profiles/avatar'
+      path: '/api/profiles/avatar'
+      fullPath: '/api/profiles/avatar'
+      preLoaderRoute: typeof ApiProfilesAvatarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/messages/search': {
       id: '/api/messages/search'
       path: '/api/messages/search'
@@ -908,6 +966,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/profiles/avatar/$userId': {
+      id: '/api/profiles/avatar/$userId'
+      path: '/$userId'
+      fullPath: '/api/profiles/avatar/$userId'
+      preLoaderRoute: typeof ApiProfilesAvatarUserIdRouteImport
+      parentRoute: typeof ApiProfilesAvatarRoute
+    }
+    '/api/files/chat/$messageId': {
+      id: '/api/files/chat/$messageId'
+      path: '/api/files/chat/$messageId'
+      fullPath: '/api/files/chat/$messageId'
+      preLoaderRoute: typeof ApiFilesChatMessageIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/reset-password/confirm': {
+      id: '/api/auth/reset-password/confirm'
+      path: '/confirm'
+      fullPath: '/api/auth/reset-password/confirm'
+      preLoaderRoute: typeof ApiAuthResetPasswordConfirmRouteImport
+      parentRoute: typeof ApiAuthResetPasswordRoute
+    }
   }
 }
 
@@ -947,6 +1026,28 @@ const ApiApplicationsRouteWithChildren = ApiApplicationsRoute._addFileChildren(
   ApiApplicationsRouteChildren,
 )
 
+interface ApiAuthResetPasswordRouteChildren {
+  ApiAuthResetPasswordConfirmRoute: typeof ApiAuthResetPasswordConfirmRoute
+}
+
+const ApiAuthResetPasswordRouteChildren: ApiAuthResetPasswordRouteChildren = {
+  ApiAuthResetPasswordConfirmRoute: ApiAuthResetPasswordConfirmRoute,
+}
+
+const ApiAuthResetPasswordRouteWithChildren =
+  ApiAuthResetPasswordRoute._addFileChildren(ApiAuthResetPasswordRouteChildren)
+
+interface ApiProfilesAvatarRouteChildren {
+  ApiProfilesAvatarUserIdRoute: typeof ApiProfilesAvatarUserIdRoute
+}
+
+const ApiProfilesAvatarRouteChildren: ApiProfilesAvatarRouteChildren = {
+  ApiProfilesAvatarUserIdRoute: ApiProfilesAvatarUserIdRoute,
+}
+
+const ApiProfilesAvatarRouteWithChildren =
+  ApiProfilesAvatarRoute._addFileChildren(ApiProfilesAvatarRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -977,7 +1078,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminUsersRoute: ApiAdminUsersRoute,
   ApiAuthChangeEmailRoute: ApiAuthChangeEmailRoute,
   ApiAuthChangePasswordRoute: ApiAuthChangePasswordRoute,
-  ApiAuthResetPasswordRoute: ApiAuthResetPasswordRoute,
+  ApiAuthResetPasswordRoute: ApiAuthResetPasswordRouteWithChildren,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiAuthSigninRoute: ApiAuthSigninRoute,
   ApiAuthSignoutRoute: ApiAuthSignoutRoute,
@@ -986,8 +1087,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMessagesConversationIdRoute: ApiMessagesConversationIdRoute,
   ApiMessagesConversationsRoute: ApiMessagesConversationsRoute,
   ApiMessagesSearchRoute: ApiMessagesSearchRoute,
+  ApiProfilesAvatarRoute: ApiProfilesAvatarRouteWithChildren,
   ApiProfilesMeRoute: ApiProfilesMeRoute,
   ApiPublicSetupAdminsRoute: ApiPublicSetupAdminsRoute,
+  ApiFilesChatMessageIdRoute: ApiFilesChatMessageIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

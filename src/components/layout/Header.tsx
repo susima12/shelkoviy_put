@@ -84,11 +84,13 @@ export const Header = () => {
           : "bg-[hsl(340_40%_6%/0.55)] backdrop-blur-sm"
       )}
     >
-      <div className="container flex items-center justify-between gap-3 h-20 min-w-0">
-        <LogoLink size="lg" variant={scrolled ? "light" : "dark"} />
+      <div className="container flex h-20 items-center gap-4 min-w-0 max-w-[1600px]">
+        <div className="shrink-0 flex-none max-w-[240px]">
+          <LogoLink size="lg" variant={scrolled ? "light" : "dark"} />
+        </div>
 
         {/* Десктоп: 2xl+ чтобы при входе кнопки не ломали вёрстку */}
-        <nav className="hidden 2xl:flex items-center gap-0.5 min-w-0 flex-1 justify-center max-w-3xl">
+        <nav className="hidden 2xl:flex items-center gap-0.5 min-w-0 flex-1 justify-center px-2">
           {NAV.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.to === "/"} className={({ isActive }) => navLinkClass(isActive)}>
               {item.label}
@@ -129,7 +131,7 @@ export const Header = () => {
         <button
           type="button"
           className={cn(
-            "2xl:hidden p-2 rounded-md shrink-0 transition-silk",
+            "2xl:hidden p-2 rounded-md shrink-0 ml-auto transition-silk",
             onDark ? "text-[hsl(40_35%_92%)] hover:bg-[hsl(40_20%_90%/0.12)]" : "text-foreground hover:bg-secondary/60"
           )}
           onClick={() => setOpen(!open)}

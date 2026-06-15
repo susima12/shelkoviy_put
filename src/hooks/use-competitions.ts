@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { api } from "@/lib/api-client";
 import { FESTIVAL_COMPETITIONS, type StaticCompetition } from "@/lib/competitions-data";
 
@@ -140,16 +140,19 @@ export async function fetchCompetitions(options?: {
 }
 
 export function useCompetitions(options?: { acceptingOnly?: boolean; limit?: number }) {
-  const [items, setItems] = useState<Competition[]>([]);
-  const [loading, setLoading] = useState(true);
+  const staticItems = useMemo(
+    () => getStaticCompetitions(options),
+    [options?.acceptingOnly, options?.limit]
+  );
+  const [items, setItems] = useState<Competition[]>(staticItems);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
     fetchCompetitions(options).then(({ data, error: err }) => {
       if (!mounted) return;
-      setItems(data);
+      if (data.length) setItems(data);
       setError(err ?? null);
       setLoading(false);
     });

@@ -29,7 +29,7 @@ const CardOrnament = ({ color }: { color: string }) => (
 export const CompetitionsList = ({ limit }: { limit?: number }) => {
   const { items, loading } = useCompetitions({ limit });
 
-  if (loading) {
+  if (loading && items.length === 0) {
     return <p className="text-center text-muted-foreground py-8">Загрузка конкурсов...</p>;
   }
 

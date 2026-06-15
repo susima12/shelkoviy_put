@@ -26,7 +26,9 @@ export const Route = createFileRoute("/api/chat/$slug")({
 
         const messages = allowed
           ? (db.prepare(`
-              SELECT m.id, m.content, m.created_at, m.user_id, COALESCE(p.display_name, u.email) as author_name
+              SELECT m.id, m.content, m.created_at, m.user_id,
+                m.attachment_url, m.attachment_name, m.attachment_mime,
+                COALESCE(p.display_name, u.email) as author_name
               FROM chat_messages m
               JOIN users u ON u.id = m.user_id
               LEFT JOIN profiles p ON p.user_id = m.user_id
@@ -64,7 +66,12 @@ export const Route = createFileRoute("/api/chat/$slug")({
         const user = await getUserFromRequest(request);
         if (!user) return errorResponse("Unauthorized", 401);
 
-        const body = await parseJsonBody<{ content?: string; action?: string; user_id?: string }>(request);
+        const body = await parseJsonBody<{
+          content?: string;
+          action?: string;
+          user_id?: string;
+          attachment?: { data: string; name: string; mime: string };
+        }>(request);
         const db = getDb();
         const comp = db.prepare("SELECT id FROM competitions WHERE slug = ?").get(params.slug) as { id: string } | undefined;
         if (!comp) return errorResponse("Конкурс не найден", 404);
@@ -91,16 +98,28 @@ export const Route = createFileRoute("/api/chat/$slug")({
           .get(comp.id, user.id);
         if (!isAdmin && !member) return errorResponse("Forbidden", 403);
 
-        const content = body.content?.trim();
-        if (!content) return errorResponse("Пустое сообщение");
+        const content = body.content?.trim() ?? "";
+        if (!content && !body.attachment) return errorResponse("Пустое сообщение");
 
         const id = crypto.randomUUID();
-        db.prepare("INSERT INTO chat_messages (id, competition_id, user_id, content) VALUES (?, ?, ?, ?)").run(
-          id,
-          comp.id,
-          user.id,
-          content
-        );
+
+        let attachment_url: string | null = null;
+        let attachment_name: string | null = null;
+        let attachment_mime: string | null = null;
+
+        if (body.attachment) {
+          const { saveChatAttachment } = await import("@/server/chat-files");
+          const saved = saveChatAttachment("comp", id, body.attachment);
+          if (!saved) return errorResponse("Неподдерживаемый файл или слишком большой размер");
+          attachment_url = saved.attachment_url;
+          attachment_name = saved.attachment_name;
+          attachment_mime = saved.attachment_mime;
+        }
+
+        db.prepare(
+          `INSERT INTO chat_messages (id, competition_id, user_id, content, attachment_url, attachment_name, attachment_mime)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        ).run(id, comp.id, user.id, content, attachment_url, attachment_name, attachment_mime);
         return jsonResponse({ ok: true, id });
       },
     },

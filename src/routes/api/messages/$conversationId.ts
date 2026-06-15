@@ -42,9 +42,13 @@ export const Route = createFileRoute("/api/messages/$conversationId")({
         const user = await getUserFromRequest(request);
         if (!user) return errorResponse("Unauthorized", 401);
 
-        const { content, reply_to } = await parseJsonBody<{ content: string; reply_to?: string }>(request);
-        const text = content?.trim();
-        if (!text) return errorResponse("Пустое сообщение");
+        const { content, reply_to, attachment } = await parseJsonBody<{
+          content?: string;
+          reply_to?: string;
+          attachment?: { data: string; name: string; mime: string };
+        }>(request);
+        const text = content?.trim() ?? "";
+        if (!text && !attachment) return errorResponse("Пустое сообщение");
 
         const db = getDb();
         const conv = db
@@ -57,9 +61,24 @@ export const Route = createFileRoute("/api/messages/$conversationId")({
 
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
+
+        let attachment_url: string | null = null;
+        let attachment_name: string | null = null;
+        let attachment_mime: string | null = null;
+
+        if (attachment) {
+          const { saveChatAttachment } = await import("@/server/chat-files");
+          const saved = saveChatAttachment("dm", id, attachment);
+          if (!saved) return errorResponse("Неподдерживаемый файл или слишком большой размер");
+          attachment_url = saved.attachment_url;
+          attachment_name = saved.attachment_name;
+          attachment_mime = saved.attachment_mime;
+        }
+
         db.prepare(
-          `INSERT INTO dm_messages (id, conversation_id, sender_id, content, reply_to) VALUES (?, ?, ?, ?, ?)`
-        ).run(id, params.conversationId, user.id, text, reply_to ?? null);
+          `INSERT INTO dm_messages (id, conversation_id, sender_id, content, reply_to, attachment_url, attachment_name, attachment_mime)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        ).run(id, params.conversationId, user.id, text, reply_to ?? null, attachment_url, attachment_name, attachment_mime);
         db.prepare("UPDATE dm_conversations SET last_message_at = ? WHERE id = ?").run(now, params.conversationId);
 
         return jsonResponse({ ok: true, id });

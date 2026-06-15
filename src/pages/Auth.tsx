@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "@/lib/router-compat";
-import { api, notifyAuthChange, setToken } from "@/lib/api-client";
-import { PageHero } from "@/components/ui/page-hero";
-import { Card } from "@/components/ui/card";
+import { useNavigate, useSearchParams, Link } from "@/lib/router-compat";
+import { api, notifyAuthChange, restoreSession, setToken } from "@/lib/api-client";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
-import { Link } from "@/lib/router-compat";
-import { restoreSession } from "@/lib/api-client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_RE = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
@@ -31,13 +29,13 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
-  const [showReset, setShowReset] = useState(false);
+  const [resetEnabled, setResetEnabled] = useState(false);
 
   useEffect(() => {
     restoreSession().then((user) => {
       if (user) routeAfterLogin(!!user.is_admin, nav, redirectTo);
     });
+    api.resetPasswordEnabled().then((r) => setResetEnabled(r.enabled)).catch(() => {});
   }, [nav, redirectTo]);
 
   const validate = () => {
@@ -90,77 +88,78 @@ const Auth = () => {
     }
   };
 
-  const sendReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!EMAIL_RE.test(resetEmail)) { toast.error("Некорректный email"); return; }
-    setBusy(true);
-    try {
-      await api.resetPassword(resetEmail);
-      toast.success("Обратитесь в оргкомитет, если письмо не пришло: zayavka@shelk-put.com");
-      setShowReset(false);
-    } catch (err: unknown) {
-      toast.error(translateError(err));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const toggleMode = () => setMode(mode === "signin" ? "signup" : "signin");
 
   return (
-    <>
-      <PageHero eyebrow="Аккаунт" title={mode === "signin" ? "Вход" : "Регистрация"} />
-      <section className="py-16">
-        <div className="container max-w-md">
-          <Card className="p-8">
-            <form onSubmit={submit} className="space-y-4">
-              {mode === "signup" && (
-                <div>
-                  <Label>Имя</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} required />
-                </div>
-              )}
-              <div>
-                <Label>Email</Label>
-                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </div>
-              <div>
-                <Label>Пароль</Label>
-                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                {mode === "signup" && (
-                  <p className="text-xs text-muted-foreground mt-1">8–72 символа, минимум одна буква и одна цифра</p>
-                )}
-              </div>
-              <Button type="submit" variant="wine" className="w-full" disabled={busy}>
-                {busy ? "..." : mode === "signin" ? "Войти" : "Создать аккаунт"}
-              </Button>
-            </form>
-            <div className="mt-4 text-center text-sm space-y-2">
-              <button type="button" className="text-primary hover:underline" onClick={() => setShowReset(!showReset)}>
-                Забыли пароль?
-              </button>
-              <div>
-                <button
-                  type="button"
-                  className="text-muted-foreground hover:text-primary"
-                  onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-                >
-                  {mode === "signin" ? "Создать аккаунт" : "Уже есть аккаунт? Войти"}
-                </button>
-              </div>
-            </div>
-            {showReset && (
-              <form onSubmit={sendReset} className="mt-6 pt-6 border-t space-y-3">
-                <Label>Email для сброса</Label>
-                <Input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
-                <Button type="submit" variant="outline" className="w-full" disabled={busy}>Отправить</Button>
-              </form>
-            )}
-          </Card>
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            <Link to="/" className="hover:text-primary">← На главную</Link>
-          </p>
+    <AuthShell
+      title={mode === "signin" ? "Вход" : "Регистрация"}
+      subtitle={
+        mode === "signin"
+          ? "Войдите, чтобы подать заявку и следить за статусом"
+          : "Создайте аккаунт участника фестиваля"
+      }
+    >
+      <form onSubmit={submit} className="space-y-5">
+        {mode === "signup" && (
+          <div className="space-y-2">
+            <Label htmlFor="name">Имя</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+              required
+              autoComplete="name"
+              className="h-11"
+            />
+          </div>
+        )}
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            className="h-11"
+          />
         </div>
-      </section>
-    </>
+        <div className="space-y-2">
+          <Label htmlFor="password">Пароль</Label>
+          <PasswordInput
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            className="h-11"
+          />
+          {mode === "signup" && (
+            <p className="text-xs text-muted-foreground">8–72 символа, минимум одна буква и одна цифра</p>
+          )}
+        </div>
+        <Button type="submit" variant="wine" size="lg" className="w-full" disabled={busy}>
+          {busy ? "Подождите…" : mode === "signin" ? "Войти" : "Создать аккаунт"}
+        </Button>
+      </form>
+
+      <div className="mt-6 pt-5 border-t border-border/60 flex flex-col items-center gap-3 text-sm">
+        {mode === "signin" && resetEnabled && (
+          <Link to="/reset-password" className="text-primary hover:underline">
+            Забыли пароль?
+          </Link>
+        )}
+        <button
+          type="button"
+          className="text-muted-foreground hover:text-foreground transition-colors"
+          onClick={toggleMode}
+        >
+          {mode === "signin" ? "Нет аккаунта? Зарегистрироваться" : "Уже есть аккаунт? Войти"}
+        </button>
+      </div>
+    </AuthShell>
   );
 };
 
