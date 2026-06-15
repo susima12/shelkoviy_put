@@ -1,8 +1,8 @@
-import * as Icons from "lucide-react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "@/lib/router-compat";
 import { useCompetitions } from "@/hooks/use-competitions";
 import { COMPETITION_META } from "@/lib/competitions-data";
+import { getCompetitionIcon } from "@/lib/competition-icons";
 import { SectionTitle } from "@/components/ui/section-title";
 import { Button } from "@/components/ui/button";
 
@@ -36,8 +36,7 @@ export const CompetitionsList = ({ limit }: { limit?: number }) => {
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {items.map((c, i) => {
-        const Icon = (Icons[(COMPETITION_META[c.slug]?.icon ?? "Sparkles") as keyof typeof Icons] ??
-          Icons.Sparkles) as React.ComponentType<{ className?: string }>;
+        const Icon = getCompetitionIcon(COMPETITION_META[c.slug]?.icon);
         const p = PALETTE[COMPETITION_META[c.slug]?.color ?? "gold"] ?? PALETTE.gold;
 
         return (

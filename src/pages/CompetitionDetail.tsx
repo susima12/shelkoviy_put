@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "@/lib/router-compat";
-import * as Icons from "lucide-react";
 import { ArrowLeft, Phone, CreditCard } from "lucide-react";
 import { fetchCompetitions } from "@/hooks/use-competitions";
 import { COMPETITION_META, getStaticBySlug } from "@/lib/competitions-data";
+import { getCompetitionIcon } from "@/lib/competition-icons";
 import { FESTIVAL_2026 } from "@/lib/festival-info";
 import { PageHero } from "@/components/ui/page-hero";
 import { Button } from "@/components/ui/button";
@@ -45,8 +45,7 @@ const CompetitionDetail = () => {
   if (loading) return <div className="container py-32 text-center">Загрузка...</div>;
   if (!c) return <div className="container py-32 text-center">Конкурс не найден</div>;
 
-  const Icon = (Icons[(COMPETITION_META[c.slug]?.icon ?? "Sparkles") as keyof typeof Icons] ??
-    Icons.Sparkles) as React.ComponentType<{ className?: string }>;
+  const Icon = getCompetitionIcon(COMPETITION_META[c.slug]?.icon);
 
   return (
     <>
