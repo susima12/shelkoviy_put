@@ -26,7 +26,9 @@ import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NewsIndexRouteImport } from './routes/news.index'
 import { Route as CompetitionsIndexRouteImport } from './routes/competitions.index'
+import { Route as NewsIdRouteImport } from './routes/news.$id'
 import { Route as CompetitionsSlugRouteImport } from './routes/competitions.$slug'
 import { Route as ChatSlugRouteImport } from './routes/chat.$slug'
 import { Route as ApplySlugRouteImport } from './routes/apply.$slug'
@@ -36,10 +38,12 @@ import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiCompetitionsRouteImport } from './routes/api/competitions'
 import { Route as ApiApplicationsRouteImport } from './routes/api/applications'
 import { Route as AdminUsersRouteImport } from './routes/admin_.users'
+import { Route as AdminNewsRouteImport } from './routes/admin_.news'
 import { Route as AdminChatRouteImport } from './routes/admin_.chat'
 import { Route as ApiPublicSetupAdminsRouteImport } from './routes/api/public/setup-admins'
 import { Route as ApiProfilesMeRouteImport } from './routes/api/profiles/me'
 import { Route as ApiProfilesAvatarRouteImport } from './routes/api/profiles/avatar'
+import { Route as ApiNewsIdRouteImport } from './routes/api/news.$id'
 import { Route as ApiMessagesSearchRouteImport } from './routes/api/messages/search'
 import { Route as ApiMessagesConversationsRouteImport } from './routes/api/messages/conversations'
 import { Route as ApiMessagesConversationIdRouteImport } from './routes/api/messages/$conversationId'
@@ -53,10 +57,13 @@ import { Route as ApiAuthChangePasswordRouteImport } from './routes/api/auth/cha
 import { Route as ApiAuthChangeEmailRouteImport } from './routes/api/auth/change-email'
 import { Route as ApiApplicationsIdRouteImport } from './routes/api/applications.$id'
 import { Route as ApiAdminUsersRouteImport } from './routes/api/admin/users'
+import { Route as ApiAdminNewsRouteImport } from './routes/api/admin/news'
 import { Route as ApiAdminDashboardRouteImport } from './routes/api/admin/dashboard'
 import { Route as ApiProfilesAvatarUserIdRouteImport } from './routes/api/profiles/avatar.$userId'
+import { Route as ApiFilesNewsNewsIdRouteImport } from './routes/api/files/news.$newsId'
 import { Route as ApiFilesChatMessageIdRouteImport } from './routes/api/files/chat.$messageId'
 import { Route as ApiAuthResetPasswordConfirmRouteImport } from './routes/api/auth/reset-password.confirm'
+import { Route as ApiAdminNewsIdRouteImport } from './routes/api/admin/news.$id'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -143,10 +150,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NewsIndexRoute = NewsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => NewsRoute,
+} as any)
 const CompetitionsIndexRoute = CompetitionsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => CompetitionsRoute,
+} as any)
+const NewsIdRoute = NewsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => NewsRoute,
 } as any)
 const CompetitionsSlugRoute = CompetitionsSlugRouteImport.update({
   id: '/$slug',
@@ -193,6 +210,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminNewsRoute = AdminNewsRouteImport.update({
+  id: '/admin_/news',
+  path: '/admin/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminChatRoute = AdminChatRouteImport.update({
   id: '/admin_/chat',
   path: '/admin/chat',
@@ -212,6 +234,11 @@ const ApiProfilesAvatarRoute = ApiProfilesAvatarRouteImport.update({
   id: '/api/profiles/avatar',
   path: '/api/profiles/avatar',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNewsIdRoute = ApiNewsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiNewsRoute,
 } as any)
 const ApiMessagesSearchRoute = ApiMessagesSearchRouteImport.update({
   id: '/api/messages/search',
@@ -280,6 +307,11 @@ const ApiAdminUsersRoute = ApiAdminUsersRouteImport.update({
   path: '/api/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminNewsRoute = ApiAdminNewsRouteImport.update({
+  id: '/api/admin/news',
+  path: '/api/admin/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminDashboardRoute = ApiAdminDashboardRouteImport.update({
   id: '/api/admin/dashboard',
   path: '/api/admin/dashboard',
@@ -289,6 +321,11 @@ const ApiProfilesAvatarUserIdRoute = ApiProfilesAvatarUserIdRouteImport.update({
   id: '/$userId',
   path: '/$userId',
   getParentRoute: () => ApiProfilesAvatarRoute,
+} as any)
+const ApiFilesNewsNewsIdRoute = ApiFilesNewsNewsIdRouteImport.update({
+  id: '/api/files/news/$newsId',
+  path: '/api/files/news/$newsId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiFilesChatMessageIdRoute = ApiFilesChatMessageIdRouteImport.update({
   id: '/api/files/chat/$messageId',
@@ -301,6 +338,11 @@ const ApiAuthResetPasswordConfirmRoute =
     path: '/confirm',
     getParentRoute: () => ApiAuthResetPasswordRoute,
   } as any)
+const ApiAdminNewsIdRoute = ApiAdminNewsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiAdminNewsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -315,23 +357,27 @@ export interface FileRoutesByFullPath {
   '/master-classes': typeof MasterClassesRoute
   '/messages': typeof MessagesRoute
   '/my-applications': typeof MyApplicationsRoute
-  '/news': typeof NewsRoute
+  '/news': typeof NewsRouteWithChildren
   '/partners': typeof PartnersRoute
   '/payment': typeof PaymentRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/chat': typeof AdminChatRoute
+  '/admin/news': typeof AdminNewsRoute
   '/admin/users': typeof AdminUsersRoute
   '/api/applications': typeof ApiApplicationsRouteWithChildren
   '/api/competitions': typeof ApiCompetitionsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/jury': typeof ApiJuryRoute
-  '/api/news': typeof ApiNewsRoute
+  '/api/news': typeof ApiNewsRouteWithChildren
   '/apply/$slug': typeof ApplySlugRoute
   '/chat/$slug': typeof ChatSlugRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/news/$id': typeof NewsIdRoute
   '/competitions/': typeof CompetitionsIndexRoute
+  '/news/': typeof NewsIndexRoute
   '/api/admin/dashboard': typeof ApiAdminDashboardRoute
+  '/api/admin/news': typeof ApiAdminNewsRouteWithChildren
   '/api/admin/users': typeof ApiAdminUsersRoute
   '/api/applications/$id': typeof ApiApplicationsIdRoute
   '/api/auth/change-email': typeof ApiAuthChangeEmailRoute
@@ -345,11 +391,14 @@ export interface FileRoutesByFullPath {
   '/api/messages/$conversationId': typeof ApiMessagesConversationIdRoute
   '/api/messages/conversations': typeof ApiMessagesConversationsRoute
   '/api/messages/search': typeof ApiMessagesSearchRoute
+  '/api/news/$id': typeof ApiNewsIdRoute
   '/api/profiles/avatar': typeof ApiProfilesAvatarRouteWithChildren
   '/api/profiles/me': typeof ApiProfilesMeRoute
   '/api/public/setup-admins': typeof ApiPublicSetupAdminsRoute
+  '/api/admin/news/$id': typeof ApiAdminNewsIdRoute
   '/api/auth/reset-password/confirm': typeof ApiAuthResetPasswordConfirmRoute
   '/api/files/chat/$messageId': typeof ApiFilesChatMessageIdRoute
+  '/api/files/news/$newsId': typeof ApiFilesNewsNewsIdRoute
   '/api/profiles/avatar/$userId': typeof ApiProfilesAvatarUserIdRoute
 }
 export interface FileRoutesByTo {
@@ -364,23 +413,26 @@ export interface FileRoutesByTo {
   '/master-classes': typeof MasterClassesRoute
   '/messages': typeof MessagesRoute
   '/my-applications': typeof MyApplicationsRoute
-  '/news': typeof NewsRoute
   '/partners': typeof PartnersRoute
   '/payment': typeof PaymentRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/chat': typeof AdminChatRoute
+  '/admin/news': typeof AdminNewsRoute
   '/admin/users': typeof AdminUsersRoute
   '/api/applications': typeof ApiApplicationsRouteWithChildren
   '/api/competitions': typeof ApiCompetitionsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/jury': typeof ApiJuryRoute
-  '/api/news': typeof ApiNewsRoute
+  '/api/news': typeof ApiNewsRouteWithChildren
   '/apply/$slug': typeof ApplySlugRoute
   '/chat/$slug': typeof ChatSlugRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/news/$id': typeof NewsIdRoute
   '/competitions': typeof CompetitionsIndexRoute
+  '/news': typeof NewsIndexRoute
   '/api/admin/dashboard': typeof ApiAdminDashboardRoute
+  '/api/admin/news': typeof ApiAdminNewsRouteWithChildren
   '/api/admin/users': typeof ApiAdminUsersRoute
   '/api/applications/$id': typeof ApiApplicationsIdRoute
   '/api/auth/change-email': typeof ApiAuthChangeEmailRoute
@@ -394,11 +446,14 @@ export interface FileRoutesByTo {
   '/api/messages/$conversationId': typeof ApiMessagesConversationIdRoute
   '/api/messages/conversations': typeof ApiMessagesConversationsRoute
   '/api/messages/search': typeof ApiMessagesSearchRoute
+  '/api/news/$id': typeof ApiNewsIdRoute
   '/api/profiles/avatar': typeof ApiProfilesAvatarRouteWithChildren
   '/api/profiles/me': typeof ApiProfilesMeRoute
   '/api/public/setup-admins': typeof ApiPublicSetupAdminsRoute
+  '/api/admin/news/$id': typeof ApiAdminNewsIdRoute
   '/api/auth/reset-password/confirm': typeof ApiAuthResetPasswordConfirmRoute
   '/api/files/chat/$messageId': typeof ApiFilesChatMessageIdRoute
+  '/api/files/news/$newsId': typeof ApiFilesNewsNewsIdRoute
   '/api/profiles/avatar/$userId': typeof ApiProfilesAvatarUserIdRoute
 }
 export interface FileRoutesById {
@@ -415,23 +470,27 @@ export interface FileRoutesById {
   '/master-classes': typeof MasterClassesRoute
   '/messages': typeof MessagesRoute
   '/my-applications': typeof MyApplicationsRoute
-  '/news': typeof NewsRoute
+  '/news': typeof NewsRouteWithChildren
   '/partners': typeof PartnersRoute
   '/payment': typeof PaymentRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin_/chat': typeof AdminChatRoute
+  '/admin_/news': typeof AdminNewsRoute
   '/admin_/users': typeof AdminUsersRoute
   '/api/applications': typeof ApiApplicationsRouteWithChildren
   '/api/competitions': typeof ApiCompetitionsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/jury': typeof ApiJuryRoute
-  '/api/news': typeof ApiNewsRoute
+  '/api/news': typeof ApiNewsRouteWithChildren
   '/apply/$slug': typeof ApplySlugRoute
   '/chat/$slug': typeof ChatSlugRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/news/$id': typeof NewsIdRoute
   '/competitions/': typeof CompetitionsIndexRoute
+  '/news/': typeof NewsIndexRoute
   '/api/admin/dashboard': typeof ApiAdminDashboardRoute
+  '/api/admin/news': typeof ApiAdminNewsRouteWithChildren
   '/api/admin/users': typeof ApiAdminUsersRoute
   '/api/applications/$id': typeof ApiApplicationsIdRoute
   '/api/auth/change-email': typeof ApiAuthChangeEmailRoute
@@ -445,11 +504,14 @@ export interface FileRoutesById {
   '/api/messages/$conversationId': typeof ApiMessagesConversationIdRoute
   '/api/messages/conversations': typeof ApiMessagesConversationsRoute
   '/api/messages/search': typeof ApiMessagesSearchRoute
+  '/api/news/$id': typeof ApiNewsIdRoute
   '/api/profiles/avatar': typeof ApiProfilesAvatarRouteWithChildren
   '/api/profiles/me': typeof ApiProfilesMeRoute
   '/api/public/setup-admins': typeof ApiPublicSetupAdminsRoute
+  '/api/admin/news/$id': typeof ApiAdminNewsIdRoute
   '/api/auth/reset-password/confirm': typeof ApiAuthResetPasswordConfirmRoute
   '/api/files/chat/$messageId': typeof ApiFilesChatMessageIdRoute
+  '/api/files/news/$newsId': typeof ApiFilesNewsNewsIdRoute
   '/api/profiles/avatar/$userId': typeof ApiProfilesAvatarUserIdRoute
 }
 export interface FileRouteTypes {
@@ -473,6 +535,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/admin/chat'
+    | '/admin/news'
     | '/admin/users'
     | '/api/applications'
     | '/api/competitions'
@@ -482,8 +545,11 @@ export interface FileRouteTypes {
     | '/apply/$slug'
     | '/chat/$slug'
     | '/competitions/$slug'
+    | '/news/$id'
     | '/competitions/'
+    | '/news/'
     | '/api/admin/dashboard'
+    | '/api/admin/news'
     | '/api/admin/users'
     | '/api/applications/$id'
     | '/api/auth/change-email'
@@ -497,11 +563,14 @@ export interface FileRouteTypes {
     | '/api/messages/$conversationId'
     | '/api/messages/conversations'
     | '/api/messages/search'
+    | '/api/news/$id'
     | '/api/profiles/avatar'
     | '/api/profiles/me'
     | '/api/public/setup-admins'
+    | '/api/admin/news/$id'
     | '/api/auth/reset-password/confirm'
     | '/api/files/chat/$messageId'
+    | '/api/files/news/$newsId'
     | '/api/profiles/avatar/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -516,12 +585,12 @@ export interface FileRouteTypes {
     | '/master-classes'
     | '/messages'
     | '/my-applications'
-    | '/news'
     | '/partners'
     | '/payment'
     | '/profile'
     | '/reset-password'
     | '/admin/chat'
+    | '/admin/news'
     | '/admin/users'
     | '/api/applications'
     | '/api/competitions'
@@ -531,8 +600,11 @@ export interface FileRouteTypes {
     | '/apply/$slug'
     | '/chat/$slug'
     | '/competitions/$slug'
+    | '/news/$id'
     | '/competitions'
+    | '/news'
     | '/api/admin/dashboard'
+    | '/api/admin/news'
     | '/api/admin/users'
     | '/api/applications/$id'
     | '/api/auth/change-email'
@@ -546,11 +618,14 @@ export interface FileRouteTypes {
     | '/api/messages/$conversationId'
     | '/api/messages/conversations'
     | '/api/messages/search'
+    | '/api/news/$id'
     | '/api/profiles/avatar'
     | '/api/profiles/me'
     | '/api/public/setup-admins'
+    | '/api/admin/news/$id'
     | '/api/auth/reset-password/confirm'
     | '/api/files/chat/$messageId'
+    | '/api/files/news/$newsId'
     | '/api/profiles/avatar/$userId'
   id:
     | '__root__'
@@ -572,6 +647,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/admin_/chat'
+    | '/admin_/news'
     | '/admin_/users'
     | '/api/applications'
     | '/api/competitions'
@@ -581,8 +657,11 @@ export interface FileRouteTypes {
     | '/apply/$slug'
     | '/chat/$slug'
     | '/competitions/$slug'
+    | '/news/$id'
     | '/competitions/'
+    | '/news/'
     | '/api/admin/dashboard'
+    | '/api/admin/news'
     | '/api/admin/users'
     | '/api/applications/$id'
     | '/api/auth/change-email'
@@ -596,11 +675,14 @@ export interface FileRouteTypes {
     | '/api/messages/$conversationId'
     | '/api/messages/conversations'
     | '/api/messages/search'
+    | '/api/news/$id'
     | '/api/profiles/avatar'
     | '/api/profiles/me'
     | '/api/public/setup-admins'
+    | '/api/admin/news/$id'
     | '/api/auth/reset-password/confirm'
     | '/api/files/chat/$messageId'
+    | '/api/files/news/$newsId'
     | '/api/profiles/avatar/$userId'
   fileRoutesById: FileRoutesById
 }
@@ -617,20 +699,22 @@ export interface RootRouteChildren {
   MasterClassesRoute: typeof MasterClassesRoute
   MessagesRoute: typeof MessagesRoute
   MyApplicationsRoute: typeof MyApplicationsRoute
-  NewsRoute: typeof NewsRoute
+  NewsRoute: typeof NewsRouteWithChildren
   PartnersRoute: typeof PartnersRoute
   PaymentRoute: typeof PaymentRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   AdminChatRoute: typeof AdminChatRoute
+  AdminNewsRoute: typeof AdminNewsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   ApiApplicationsRoute: typeof ApiApplicationsRouteWithChildren
   ApiCompetitionsRoute: typeof ApiCompetitionsRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiJuryRoute: typeof ApiJuryRoute
-  ApiNewsRoute: typeof ApiNewsRoute
+  ApiNewsRoute: typeof ApiNewsRouteWithChildren
   ChatSlugRoute: typeof ChatSlugRoute
   ApiAdminDashboardRoute: typeof ApiAdminDashboardRoute
+  ApiAdminNewsRoute: typeof ApiAdminNewsRouteWithChildren
   ApiAdminUsersRoute: typeof ApiAdminUsersRoute
   ApiAuthChangeEmailRoute: typeof ApiAuthChangeEmailRoute
   ApiAuthChangePasswordRoute: typeof ApiAuthChangePasswordRoute
@@ -647,6 +731,7 @@ export interface RootRouteChildren {
   ApiProfilesMeRoute: typeof ApiProfilesMeRoute
   ApiPublicSetupAdminsRoute: typeof ApiPublicSetupAdminsRoute
   ApiFilesChatMessageIdRoute: typeof ApiFilesChatMessageIdRoute
+  ApiFilesNewsNewsIdRoute: typeof ApiFilesNewsNewsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -770,12 +855,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/news/': {
+      id: '/news/'
+      path: '/'
+      fullPath: '/news/'
+      preLoaderRoute: typeof NewsIndexRouteImport
+      parentRoute: typeof NewsRoute
+    }
     '/competitions/': {
       id: '/competitions/'
       path: '/'
       fullPath: '/competitions/'
       preLoaderRoute: typeof CompetitionsIndexRouteImport
       parentRoute: typeof CompetitionsRoute
+    }
+    '/news/$id': {
+      id: '/news/$id'
+      path: '/$id'
+      fullPath: '/news/$id'
+      preLoaderRoute: typeof NewsIdRouteImport
+      parentRoute: typeof NewsRoute
     }
     '/competitions/$slug': {
       id: '/competitions/$slug'
@@ -840,6 +939,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin_/news': {
+      id: '/admin_/news'
+      path: '/admin/news'
+      fullPath: '/admin/news'
+      preLoaderRoute: typeof AdminNewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin_/chat': {
       id: '/admin_/chat'
       path: '/admin/chat'
@@ -867,6 +973,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/profiles/avatar'
       preLoaderRoute: typeof ApiProfilesAvatarRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/news/$id': {
+      id: '/api/news/$id'
+      path: '/$id'
+      fullPath: '/api/news/$id'
+      preLoaderRoute: typeof ApiNewsIdRouteImport
+      parentRoute: typeof ApiNewsRoute
     }
     '/api/messages/search': {
       id: '/api/messages/search'
@@ -959,6 +1072,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/news': {
+      id: '/api/admin/news'
+      path: '/api/admin/news'
+      fullPath: '/api/admin/news'
+      preLoaderRoute: typeof ApiAdminNewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/dashboard': {
       id: '/api/admin/dashboard'
       path: '/api/admin/dashboard'
@@ -973,6 +1093,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiProfilesAvatarUserIdRouteImport
       parentRoute: typeof ApiProfilesAvatarRoute
     }
+    '/api/files/news/$newsId': {
+      id: '/api/files/news/$newsId'
+      path: '/api/files/news/$newsId'
+      fullPath: '/api/files/news/$newsId'
+      preLoaderRoute: typeof ApiFilesNewsNewsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/files/chat/$messageId': {
       id: '/api/files/chat/$messageId'
       path: '/api/files/chat/$messageId'
@@ -986,6 +1113,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/auth/reset-password/confirm'
       preLoaderRoute: typeof ApiAuthResetPasswordConfirmRouteImport
       parentRoute: typeof ApiAuthResetPasswordRoute
+    }
+    '/api/admin/news/$id': {
+      id: '/api/admin/news/$id'
+      path: '/$id'
+      fullPath: '/api/admin/news/$id'
+      preLoaderRoute: typeof ApiAdminNewsIdRouteImport
+      parentRoute: typeof ApiAdminNewsRoute
     }
   }
 }
@@ -1014,6 +1148,18 @@ const CompetitionsRouteWithChildren = CompetitionsRoute._addFileChildren(
   CompetitionsRouteChildren,
 )
 
+interface NewsRouteChildren {
+  NewsIdRoute: typeof NewsIdRoute
+  NewsIndexRoute: typeof NewsIndexRoute
+}
+
+const NewsRouteChildren: NewsRouteChildren = {
+  NewsIdRoute: NewsIdRoute,
+  NewsIndexRoute: NewsIndexRoute,
+}
+
+const NewsRouteWithChildren = NewsRoute._addFileChildren(NewsRouteChildren)
+
 interface ApiApplicationsRouteChildren {
   ApiApplicationsIdRoute: typeof ApiApplicationsIdRoute
 }
@@ -1024,6 +1170,29 @@ const ApiApplicationsRouteChildren: ApiApplicationsRouteChildren = {
 
 const ApiApplicationsRouteWithChildren = ApiApplicationsRoute._addFileChildren(
   ApiApplicationsRouteChildren,
+)
+
+interface ApiNewsRouteChildren {
+  ApiNewsIdRoute: typeof ApiNewsIdRoute
+}
+
+const ApiNewsRouteChildren: ApiNewsRouteChildren = {
+  ApiNewsIdRoute: ApiNewsIdRoute,
+}
+
+const ApiNewsRouteWithChildren =
+  ApiNewsRoute._addFileChildren(ApiNewsRouteChildren)
+
+interface ApiAdminNewsRouteChildren {
+  ApiAdminNewsIdRoute: typeof ApiAdminNewsIdRoute
+}
+
+const ApiAdminNewsRouteChildren: ApiAdminNewsRouteChildren = {
+  ApiAdminNewsIdRoute: ApiAdminNewsIdRoute,
+}
+
+const ApiAdminNewsRouteWithChildren = ApiAdminNewsRoute._addFileChildren(
+  ApiAdminNewsRouteChildren,
 )
 
 interface ApiAuthResetPasswordRouteChildren {
@@ -1061,20 +1230,22 @@ const rootRouteChildren: RootRouteChildren = {
   MasterClassesRoute: MasterClassesRoute,
   MessagesRoute: MessagesRoute,
   MyApplicationsRoute: MyApplicationsRoute,
-  NewsRoute: NewsRoute,
+  NewsRoute: NewsRouteWithChildren,
   PartnersRoute: PartnersRoute,
   PaymentRoute: PaymentRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   AdminChatRoute: AdminChatRoute,
+  AdminNewsRoute: AdminNewsRoute,
   AdminUsersRoute: AdminUsersRoute,
   ApiApplicationsRoute: ApiApplicationsRouteWithChildren,
   ApiCompetitionsRoute: ApiCompetitionsRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiJuryRoute: ApiJuryRoute,
-  ApiNewsRoute: ApiNewsRoute,
+  ApiNewsRoute: ApiNewsRouteWithChildren,
   ChatSlugRoute: ChatSlugRoute,
   ApiAdminDashboardRoute: ApiAdminDashboardRoute,
+  ApiAdminNewsRoute: ApiAdminNewsRouteWithChildren,
   ApiAdminUsersRoute: ApiAdminUsersRoute,
   ApiAuthChangeEmailRoute: ApiAuthChangeEmailRoute,
   ApiAuthChangePasswordRoute: ApiAuthChangePasswordRoute,
@@ -1091,6 +1262,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiProfilesMeRoute: ApiProfilesMeRoute,
   ApiPublicSetupAdminsRoute: ApiPublicSetupAdminsRoute,
   ApiFilesChatMessageIdRoute: ApiFilesChatMessageIdRoute,
+  ApiFilesNewsNewsIdRoute: ApiFilesNewsNewsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

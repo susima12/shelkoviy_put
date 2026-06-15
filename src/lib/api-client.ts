@@ -152,6 +152,25 @@ export const api = {
 
   getNews: () => apiFetch<{ news: NewsRow[] }>("/api/news", { auth: false }),
 
+  getNewsItem: (id: string) => apiFetch<{ news: NewsRow }>(`/api/news/${id}`, { auth: false }),
+
+  getAdminNews: () => apiFetch<{ news: NewsRow[] }>("/api/admin/news"),
+
+  createNews: (payload: NewsPayload) =>
+    apiFetch<{ ok: boolean; news: NewsRow }>("/api/admin/news", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  updateNews: (id: string, payload: NewsPayload) =>
+    apiFetch<{ ok: boolean; news: NewsRow }>(`/api/admin/news/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+
+  deleteNews: (id: string) =>
+    apiFetch<{ ok: boolean }>(`/api/admin/news/${id}`, { method: "DELETE" }),
+
   getChat: (slug: string) => apiFetch<ChatState>(`/api/chat/${slug}`),
 
   sendChatMessage: (
@@ -245,7 +264,21 @@ export type NewsRow = {
   id: string;
   title: string;
   excerpt?: string | null;
+  body?: string | null;
+  image_url?: string | null;
+  image_mime?: string | null;
   published_at: string;
+  updated_at?: string | null;
+  author_id?: string | null;
+};
+
+export type NewsPayload = {
+  title?: string;
+  excerpt?: string;
+  body?: string;
+  published_at?: string;
+  image?: { data: string; mime: string; name?: string };
+  remove_image?: boolean;
 };
 
 export type ChatAttachmentPayload = {

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
-import { LogOut, FileText, Users, MessageSquare, Menu, X } from "lucide-react";
+import { LogOut, FileText, Users, MessageSquare, Menu, X, Newspaper } from "lucide-react";
 import { api, notifyAuthChange, setToken } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 
 const ITEMS = [
   { to: "/admin", label: "Заявки", icon: FileText, end: true },
+  { to: "/admin/news", label: "Новости", icon: Newspaper, end: false },
   { to: "/admin/users", label: "Пользователи", icon: Users, end: false },
   { to: "/admin/chat", label: "Чат", icon: MessageSquare, end: false },
 ];

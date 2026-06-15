@@ -1,5 +1,6 @@
 import { Hero } from "@/components/sections/Hero";
 import { CompetitionsSection } from "@/components/sections/Competitions";
+import { NewsSection } from "@/components/sections/NewsSection";
 import { Quote } from "lucide-react";
 import { Link } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,8 @@ const Index = () => {
       </section>
 
       <Ornament className="container my-6" />
+
+      <NewsSection />
 
       <CompetitionsSection />
 

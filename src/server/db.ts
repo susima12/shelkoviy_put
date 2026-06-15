@@ -285,6 +285,15 @@ function migrateChatAttachments(db: Database.Database) {
   }
 }
 
+function migrateNewsColumns(db: Database.Database) {
+  const cols = db.prepare("PRAGMA table_info(news)").all() as { name: string }[];
+  const has = (name: string) => cols.some((c) => c.name === name);
+  if (!has("image_url")) db.exec("ALTER TABLE news ADD COLUMN image_url TEXT");
+  if (!has("image_mime")) db.exec("ALTER TABLE news ADD COLUMN image_mime TEXT");
+  if (!has("updated_at")) db.exec("ALTER TABLE news ADD COLUMN updated_at TEXT");
+  if (!has("author_id")) db.exec("ALTER TABLE news ADD COLUMN author_id TEXT");
+}
+
 export function getDb(): Database.Database {
   if (_db) return _db;
 
@@ -296,6 +305,7 @@ export function getDb(): Database.Database {
   _db.pragma("foreign_keys = ON");
   _db.exec(SCHEMA);
   migrateChatAttachments(_db);
+  migrateNewsColumns(_db);
   seedCompetitions(_db);
   seedJury(_db);
   ensureAdminAccounts(_db);
